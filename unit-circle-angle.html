@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>単位円と角度</title>
+  <style>
+    :root {
+      --main: #2563eb;
+      --radius: #ef4444;
+      --arc: #f59e0b;
+      --axis: #111827;
+      --grid: #94a3b8;
+      --text: #0f172a;
+      --sub: #475569;
+      --bg: #f8fafc;
+      --card: #ffffff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: var(--text);
+      background: var(--bg);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
+      overscroll-behavior: none;
+    }
+    .app {
+      width: min(100%, 900px);
+      padding: 24px;
+      text-align: center;
+      background: var(--card);
+      border: 1px solid #e2e8f0;
+      border-radius: 20px;
+      box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+    }
+    h1 { margin: 0 0 8px; font-size: clamp(1.5rem, 4vw, 2.2rem); }
+    .instruction { margin: 0 0 12px; color: var(--sub); font-size: clamp(.9rem, 2.7vw, 1.1rem); line-height: 1.6; }
+    .display-area { min-height: 145px; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+    .angle-label { color: var(--sub); font-weight: 700; }
+    .angle-display { color: var(--main); font-size: clamp(3.2rem, 12vw, 6.5rem); font-weight: 800; line-height: 1.05; font-variant-numeric: tabular-nums; }
+    .quadrant-display { min-height: 1.3em; margin-top: 8px; color: var(--radius); font-size: clamp(1.8rem, 6vw, 3.5rem); font-weight: 800; line-height: 1.2; transition: opacity .15s; }
+    .quadrant-display.hidden { opacity: 0; }
+    .circle-wrapper { width: min(100%, 580px); margin: 0 auto; }
+    svg { display: block; width: 100%; height: auto; touch-action: none; cursor: grab; user-select: none; -webkit-user-select: none; }
+    svg.dragging { cursor: grabbing; }
+    .unit-circle { fill: #eff6ff; stroke: var(--main); stroke-width: 3; }
+    .scale-mark { stroke: var(--grid); stroke-width: 1.5; }
+    .axis { stroke: var(--axis); stroke-width: 3; }
+    .axis-arrow { fill: var(--axis); }
+    .axis-label { fill: var(--axis); font-size: 22px; font-weight: 800; }
+    .start-label { fill: var(--sub); font-size: 16px; font-weight: 700; }
+    .angle-arc { fill: none; stroke: var(--arc); stroke-width: 6; stroke-linecap: round; stroke-linejoin: round; }
+    .radius-line { stroke: var(--radius); stroke-width: 5; stroke-linecap: round; }
+    .point { fill: var(--radius); stroke: #fff; stroke-width: 5; filter: drop-shadow(0 3px 4px rgba(15, 23, 42, .25)); }
+    .point-hit-area { fill: transparent; }
+    .origin { fill: var(--axis); }
+    .controls { margin-top: 14px; display: flex; justify-content: center; }
+    button { min-width: 150px; min-height: 48px; padding: 10px 20px; border: 0; border-radius: 12px; color: #fff; background: var(--main); font: inherit; font-weight: 700; cursor: pointer; touch-action: manipulation; }
+    button:hover { filter: brightness(.95); }
+    button:focus-visible { outline: 4px solid rgba(37, 99, 235, .25); outline-offset: 3px; }
+    .coordinate-display { margin-top: 14px; padding: 10px; color: var(--sub); background: #f1f5f9; border-radius: 10px; font-variant-numeric: tabular-nums; }
+    .coordinate-display.hidden { display: none; }
+    .range-note { margin: 12px 0 0; color: var(--sub); font-size: .9rem; }
+    @media (max-width: 600px) {
+      body { padding: 8px; align-items: flex-start; }
+      .app { padding: 16px 10px; border-radius: 14px; }
+      .display-area { min-height: 125px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <h1>単位円と角度</h1>
+    <p class="instruction">単位円上の赤い点を、マウスまたは指で回転させてください。<br>反時計回りが正、時計回りが負です。</p>
+
+    <section class="display-area" aria-live="polite" aria-atomic="true">
+      <div class="angle-label">始線からの角度</div>
+      <div id="angleDisplay" class="angle-display">0°</div>
+      <div id="quadrantDisplay" class="quadrant-display hidden" aria-hidden="true"></div>
+    </section>
+
+    <div class="circle-wrapper">
+      <svg id="unitCircleSvg" viewBox="0 0 600 600" role="img" aria-label="点をドラッグして角度を変更できる単位円">
+        <!-- 背景と目盛り -->
+        <circle class="unit-circle" cx="300" cy="300" r="220" />
+        <g id="scaleMarks"></g>
+
+        <!-- 円弧。負の角は時計回り、360度以上は渦巻き状 -->
+        <path id="angleArc" class="angle-arc" />
+
+        <!-- 座標軸を単位円より手前に描画 -->
+        <line class="axis" x1="42" y1="300" x2="558" y2="300" />
+        <polygon class="axis-arrow" points="558,300 540,290 540,310" />
+        <line class="axis" x1="300" y1="558" x2="300" y2="42" />
+        <polygon class="axis-arrow" points="300,42 290,60 310,60" />
+
+        <!-- 動径と点 -->
+        <line id="radiusLine" class="radius-line" x1="300" y1="300" x2="520" y2="300" />
+        <circle class="origin" cx="300" cy="300" r="7" />
+        <circle id="pointHitArea" class="point-hit-area" cx="520" cy="300" r="40" />
+        <circle id="dragPoint" class="point" cx="520" cy="300" r="15" />
+
+        <!-- 軸と始線の表示 -->
+        <text class="axis-label" x="565" y="292">x</text>
+        <text class="axis-label" x="312" y="48">y</text>
+        <text class="start-label" x="526" y="329">始線</text>
+        <text class="start-label" x="309" y="324">O</text>
+      </svg>
+    </div>
+
+    <div class="controls"><button id="resetButton" type="button">0°に戻す</button></div>
+    <div id="coordinateDisplay" class="coordinate-display hidden">点の座標：<span id="coordinateValue">(1.000, 0.000)</span></div>
+    <p class="range-note">操作できる範囲：−360° ～ 720°</p>
+  </main>
+
+  <script>
+    "use strict";
+
+    const MIN_ANGLE = -360;
+    const MAX_ANGLE = 720;
+    const ANGLE_STEP = 1;
+    const SHOW_COORDINATES = false;
+
+    const CENTER_X = 300;
+    const CENTER_Y = 300;
+    const CIRCLE_RADIUS = 220;
+    const ARC_START_RADIUS = 65;
+    const ARC_END_RADIUS = 112;
+
+    const svg = document.getElementById("unitCircleSvg");
+    const dragPoint = document.getElementById("dragPoint");
+    const pointHitArea = document.getElementById("pointHitArea");
+    const radiusLine = document.getElementById("radiusLine");
+    const angleArc = document.getElementById("angleArc");
+    const angleDisplay = document.getElementById("angleDisplay");
+    const quadrantDisplay = document.getElementById("quadrantDisplay");
+    const coordinateDisplay = document.getElementById("coordinateDisplay");
+    const coordinateValue = document.getElementById("coordinateValue");
+    const resetButton = document.getElementById("resetButton");
+    const scaleMarks = document.getElementById("scaleMarks");
+
+    let rawAngle = 0;
+    let displayedAngle = 0;
+    let isDragging = false;
+    let previousPointerAngle = 0;
+
+    const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+    const normalizeAngle = angle => ((angle % 360) + 360) % 360;
+    const snapAngle = angle => Math.round(angle / ANGLE_STEP) * ANGLE_STEP;
+    const removeNegativeZero = value => Object.is(value, -0) ? 0 : value;
+
+    function getUnitCirclePoint(angleDegrees) {
+      const radians = angleDegrees * Math.PI / 180;
+      let x = Math.cos(radians);
+      let y = Math.sin(radians);
+      if (Math.abs(x) < 1e-12) x = 0;
+      if (Math.abs(y) < 1e-12) y = 0;
+      return {
+        angle: angleDegrees,
+        normalizedAngle: normalizeAngle(angleDegrees),
+        x: removeNegativeZero(x),
+        y: removeNegativeZero(y)
+      };
+    }
+
+    function getQuadrantText(angleDegrees) {
+      const angle = normalizeAngle(angleDegrees);
+      if (angle % 90 === 0) return "";
+      if (angle < 90) return "第1象限の角";
+      if (angle < 180) return "第2象限の角";
+      if (angle < 270) return "第3象限の角";
+      return "第4象限の角";
+    }
+
+    function getSvgPoint(event) {
+      const point = svg.createSVGPoint();
+      point.x = event.clientX;
+      point.y = event.clientY;
+      return point.matrixTransform(svg.getScreenCTM().inverse());
+    }
+
+    function getPointerAngle(event) {
+      const point = getSvgPoint(event);
+      return Math.atan2(CENTER_Y - point.y, point.x - CENTER_X) * 180 / Math.PI;
+    }
+
+    function getShortestAngleDifference(current, previous) {
+      let difference = current - previous;
+      while (difference > 180) difference -= 360;
+      while (difference < -180) difference += 360;
+      return difference;
+    }
+
+    function getSvgCirclePoint(angleDegrees, radius) {
+      const radians = angleDegrees * Math.PI / 180;
+      return {
+        x: CENTER_X + radius * Math.cos(radians),
+        y: CENTER_Y - radius * Math.sin(radians)
+      };
+    }
+
+    /*
+      角度を細かな線分に分けて描く。
+      負の角では半径一定で時計回りに最大1周。
+      360度を超える正の角では半径を徐々に広げ、渦巻き状にする。
+    */
+    function createAnglePath(angleDegrees) {
+      if (angleDegrees === 0) return "";
+
+      const totalAngle = angleDegrees;
+      const steps = Math.max(2, Math.ceil(Math.abs(totalAngle) / 2));
+      const points = [];
+
+      for (let i = 0; i <= steps; i++) {
+        const progress = i / steps;
+        const currentAngle = totalAngle * progress;
+        let radius = ARC_START_RADIUS;
+
+        if (totalAngle > 360) {
+          radius = ARC_START_RADIUS + (ARC_END_RADIUS - ARC_START_RADIUS) * progress;
+        }
+
+        const point = getSvgCirclePoint(currentAngle, radius);
+        points.push(`${i === 0 ? "M" : "L"} ${point.x.toFixed(2)} ${point.y.toFixed(2)}`);
+      }
+
+      return points.join(" ");
+    }
+
+    function updateDisplay() {
+      displayedAngle = removeNegativeZero(clamp(snapAngle(rawAngle), MIN_ANGLE, MAX_ANGLE));
+      const point = getUnitCirclePoint(displayedAngle);
+      const pointX = CENTER_X + CIRCLE_RADIUS * point.x;
+      const pointY = CENTER_Y - CIRCLE_RADIUS * point.y;
+
+      angleDisplay.textContent = `${displayedAngle}°`;
+      radiusLine.setAttribute("x2", pointX);
+      radiusLine.setAttribute("y2", pointY);
+      dragPoint.setAttribute("cx", pointX);
+      dragPoint.setAttribute("cy", pointY);
+      pointHitArea.setAttribute("cx", pointX);
+      pointHitArea.setAttribute("cy", pointY);
+      angleArc.setAttribute("d", createAnglePath(displayedAngle));
+
+      const quadrant = getQuadrantText(displayedAngle);
+      quadrantDisplay.textContent = quadrant;
+      quadrantDisplay.classList.toggle("hidden", quadrant === "");
+      quadrantDisplay.setAttribute("aria-hidden", quadrant === "" ? "true" : "false");
+
+      coordinateValue.textContent = `(${point.x.toFixed(3)}, ${point.y.toFixed(3)})`;
+      window.unitCircleState = {
+        angle: displayedAngle,
+        normalizedAngle: point.normalizedAngle,
+        x: point.x,
+        y: point.y,
+        quadrant: quadrant || null,
+        isOnAxis: quadrant === ""
+      };
+      window.dispatchEvent(new CustomEvent("unitcirclechange", { detail: { ...window.unitCircleState } }));
+    }
+
+    function startDragging(event) {
+      if (event.pointerType === "mouse" && event.button !== 0) return;
+      event.preventDefault();
+      isDragging = true;
+      previousPointerAngle = getPointerAngle(event);
+      svg.classList.add("dragging");
+      svg.setPointerCapture(event.pointerId);
+    }
+
+    function continueDragging(event) {
+      if (!isDragging) return;
+      event.preventDefault();
+      const currentPointerAngle = getPointerAngle(event);
+      rawAngle = clamp(rawAngle + getShortestAngleDifference(currentPointerAngle, previousPointerAngle), MIN_ANGLE, MAX_ANGLE);
+      previousPointerAngle = currentPointerAngle;
+      updateDisplay();
+    }
+
+    function stopDragging(event) {
+      if (!isDragging) return;
+      isDragging = false;
+      svg.classList.remove("dragging");
+      if (svg.hasPointerCapture(event.pointerId)) svg.releasePointerCapture(event.pointerId);
+      rawAngle = displayedAngle;
+      updateDisplay();
+    }
+
+    function createScaleMarks() {
+      const namespace = "http://www.w3.org/2000/svg";
+      for (let angle = 0; angle < 360; angle += 15) {
+        const main = angle % 90 === 0;
+        const inner = getSvgCirclePoint(angle, CIRCLE_RADIUS - (main ? 15 : 8));
+        const outer = getSvgCirclePoint(angle, CIRCLE_RADIUS + (main ? 15 : 8));
+        const line = document.createElementNS(namespace, "line");
+        line.setAttribute("class", "scale-mark");
+        line.setAttribute("x1", inner.x);
+        line.setAttribute("y1", inner.y);
+        line.setAttribute("x2", outer.x);
+        line.setAttribute("y2", outer.y);
+        scaleMarks.appendChild(line);
+      }
+    }
+
+    svg.addEventListener("pointerdown", startDragging);
+    svg.addEventListener("pointermove", continueDragging);
+    svg.addEventListener("pointerup", stopDragging);
+    svg.addEventListener("pointercancel", stopDragging);
+    resetButton.addEventListener("click", () => { rawAngle = 0; updateDisplay(); });
+
+    if (SHOW_COORDINATES) coordinateDisplay.classList.remove("hidden");
+    window.getUnitCirclePoint = getUnitCirclePoint;
+    window.setUnitCircleAngle = function(angle) {
+      const numericAngle = Number(angle);
+      if (!Number.isFinite(numericAngle)) return;
+      rawAngle = clamp(numericAngle, MIN_ANGLE, MAX_ANGLE);
+      updateDisplay();
+    };
+
+    createScaleMarks();
+    updateDisplay();
+  </script>
+</body>
+</html>
