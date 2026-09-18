@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>四角形ＰＱＲＳのＰＳとＱＲが平行になるには？</title>
+<style>
+*{box-sizing:border-box}body{margin:0;padding:20px;font-family:"Yu Gothic","Meiryo",sans-serif;background:#f3f5f7;color:#222}.panel{max-width:1050px;margin:auto;padding:20px;background:#fff;border-radius:12px;box-shadow:0 4px 18px #0002}h1{margin:0 0 8px;font-size:26px}p{line-height:1.65}.drag-note{display:inline-block;margin-top:8px;color:#d40000;font-size:1.25rem;font-weight:bold;white-space:nowrap}.controls{display:flex;align-items:center;gap:12px;margin:0 0 14px}button{padding:10px 18px;border:2px solid #315f9b;border-radius:8px;background:#315f9b;color:#fff;font-size:16px;font-weight:bold;cursor:pointer}#displayState{font-weight:bold;color:#315f9b}canvas{display:block;width:100%;height:auto;border:1px solid #aeb6bf;background:#fff;touch-action:none}.legend{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:14px;font-size:15px}.item{display:inline-flex;align-items:center;gap:6px}.swatch{width:18px;height:18px;border:1px solid #555;border-radius:3px}@media(max-width:760px){.drag-note{white-space:normal}}
+</style>
+</head>
+<body><div class="panel">
+<h1>四角形ＰＱＲＳのＰＳとＱＲが平行になるには？</h1>
+<p>四角形ＰＱＲＳに対角線ＰＲをひいたものです。∠aから∠fまでの６つの角のうち、ある２つの角の大きさが等しければ、ＰＳ//ＱＲであるといえます。その２つの角を答えなさい。<br><strong class="drag-note">※頂点PとSが動かせます。平行な辺には色がつきます。</strong></p>
+<div class="controls"><button id="toggleReason" type="button" aria-pressed="false">平行の判定を表示する</button><span id="displayState" aria-live="polite">現在：非表示</span></div>
+<canvas id="cv" width="1000" height="680"></canvas>
+<div class="legend"><span class="item"><i class="swatch" style="background:#ffdD0088"></i>a：∠QPR</span><span class="item"><i class="swatch" style="background:#ff910077"></i>b：∠PQR</span><span class="item"><i class="swatch" style="background:#00b4ff66"></i>c：∠QRP</span><span class="item"><i class="swatch" style="background:#ff5aaa66"></i>d：∠PRS</span><span class="item"><i class="swatch" style="background:#965aff66"></i>e：∠PSR</span><span class="item"><i class="swatch" style="background:#1ec85a66"></i>f：∠SPR</span></div>
+</div><script>
+const cv=document.getElementById('cv'),ctx=cv.getContext('2d');
+const Q={x:190,y:560},R={x:790,y:560},P={x:300,y:135},S={x:650,y:200};
+let dragging=null,showParallelReason=false;
+const btn=document.getElementById('toggleReason'),state=document.getElementById('displayState');
+const colors={a:'#ffdd0088',b:'#ff910077',c:'#00b4ff66',d:'#ff5aaa66',e:'#965aff66',f:'#1ec85a66'};
+const V=(a,b)=>({x:b.x-a.x,y:b.y-a.y});
+function angle(u,v){const den=Math.hypot(u.x,u.y)*Math.hypot(v.x,v.y);if(!den)return 0;return Math.round(Math.acos(Math.max(-1,Math.min(1,(u.x*v.x+u.y*v.y)/den)))*180/Math.PI)}
+function angleData(vertex,p1,p2){const start=Math.atan2(p1.y-vertex.y,p1.x-vertex.x),end=Math.atan2(p2.y-vertex.y,p2.x-vertex.x);let diff=end-start;while(diff<=-Math.PI)diff+=2*Math.PI;while(diff>Math.PI)diff-=2*Math.PI;return{start,diff,mid:start+diff/2}}
+function sector(vertex,p1,p2,r,color){const g=angleData(vertex,p1,p2);ctx.beginPath();ctx.moveTo(vertex.x,vertex.y);ctx.arc(vertex.x,vertex.y,r,g.start,g.start+g.diff,g.diff<0);ctx.closePath();ctx.fillStyle=color;ctx.fill();ctx.strokeStyle='#333';ctx.lineWidth=1.2;ctx.stroke()}
+function segment(a,b,color,w=3){ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.strokeStyle=color;ctx.lineWidth=w;ctx.stroke()}
+function overlap(a,b,p=8){return !(a.x+a.w+p<b.x||b.x+b.w+p<a.x||a.y+a.h+p<b.y||b.y+b.h+p<a.y)}
+function makeLabel(key,value,vertex,p1,p2,baseRadius,placed){const g=angleData(vertex,p1,p2),label=`${key}=${value}°`;ctx.font='bold 19px "Yu Gothic","Meiryo",sans-serif';const w=ctx.measureText(label).width,h=24;const radii=[baseRadius,baseRadius+24,Math.max(28,baseRadius-20),baseRadius+48,baseRadius+72];let best=null,bestScore=Infinity;for(const r of radii){const x=vertex.x+Math.cos(g.mid)*r-w/2,y=vertex.y+Math.sin(g.mid)*r-h/2;const box={x,y,w,h};let score=0;for(const other of placed)if(overlap(box,other))score+=10000; if(x<8||y<125||x+w>cv.width-8||y+h>cv.height-8)score+=5000;score+=Math.abs(r-baseRadius);if(score<bestScore){best=box;bestScore=score}}placed.push(best);return{...best,label}}
+function labelDraw(item){ctx.font='bold 19px "Yu Gothic","Meiryo",sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.lineWidth=4;ctx.strokeStyle='rgba(255,255,255,.95)';ctx.strokeText(item.label,item.x+item.w/2,item.y+item.h/2);ctx.fillStyle='#111';ctx.fillText(item.label,item.x+item.w/2,item.y+item.h/2)}
+function pointName(s,p,dx,dy){ctx.font='bold 24px sans-serif';ctx.fillStyle='#111';ctx.textAlign='center';ctx.fillText(s,p.x+dx,p.y+dy)}
+function draw(){ctx.clearRect(0,0,cv.width,cv.height);const vals={a:angle(V(P,Q),V(P,R)),b:angle(V(Q,P),V(Q,R)),c:angle(V(R,Q),V(R,P)),d:angle(V(R,P),V(R,S)),e:angle(V(S,P),V(S,R)),f:angle(V(P,S),V(P,R))};const ps=vals.f===vals.c,qp=vals.a===vals.d;
+sector(P,Q,R,52,colors.a);sector(P,S,R,84,colors.f);sector(Q,P,R,50,colors.b);sector(R,Q,P,52,colors.c);sector(R,P,S,84,colors.d);sector(S,P,R,50,colors.e);
+segment(Q,P,qp?'#1261d8':'#111',4);segment(P,S,ps?'#d51f2b':'#111',4);segment(S,R,qp?'#1261d8':'#111',4);segment(R,Q,ps?'#d51f2b':'#111',4);segment(P,R,'#111',2.5);
+const placed=[];const specs=[['a',P,Q,R,55],['f',P,S,R,88],['b',Q,P,R,55],['c',R,Q,P,55],['d',R,P,S,88],['e',S,P,R,55]];for(const [k,v,p1,p2,r] of specs)labelDraw(makeLabel(k,vals[k],v,p1,p2,r,placed));
+pointName('P',P,-8,-18);pointName('Q',Q,-14,28);pointName('R',R,16,28);pointName('S',S,12,-18);for(const p of[P,S]){ctx.beginPath();ctx.arc(p.x,p.y,9,0,2*Math.PI);ctx.fillStyle='#ff8a00';ctx.fill();ctx.strokeStyle='#8a4700';ctx.lineWidth=2;ctx.stroke()}
+if(showParallelReason){ctx.textAlign='left';ctx.textBaseline='middle';ctx.font='bold 25px sans-serif';if(ps){ctx.fillStyle='#d51f2b';ctx.fillText(`f = c = ${vals.f}° なので  PS ∥ QR`,24,38)}if(qp){ctx.fillStyle='#1261d8';ctx.fillText(`a = d = ${vals.a}° なので  QP ∥ RS`,24,76)}}}
+function pos(e){const r=cv.getBoundingClientRect();return{x:(e.clientX-r.left)*cv.width/r.width,y:(e.clientY-r.top)*cv.height/r.height}}
+cv.addEventListener('pointerdown',e=>{const m=pos(e);for(const p of[P,S])if(Math.hypot(p.x-m.x,p.y-m.y)<=18){dragging=p;cv.setPointerCapture(e.pointerId);break}});cv.addEventListener('pointermove',e=>{if(!dragging)return;const m=pos(e);dragging.x=Math.max(25,Math.min(cv.width-25,m.x));dragging.y=Math.max(135,Math.min(cv.height-25,m.y));draw()});cv.addEventListener('pointerup',()=>dragging=null);cv.addEventListener('pointercancel',()=>dragging=null);
+btn.addEventListener('click',()=>{showParallelReason=!showParallelReason;btn.textContent=showParallelReason?'平行の判定を表示しない':'平行の判定を表示する';btn.setAttribute('aria-pressed',String(showParallelReason));state.textContent=showParallelReason?'現在：表示中':'現在：非表示';draw()});draw();
+</script></body></html>

@@ -12,7 +12,6 @@
             --bg: #07111f;
             --card: rgba(13, 32, 57, 0.85);
             --accent: #00d4ff;
-            --accent-light: #4facfe;
             --text: #e8f1ff;
             --subtext: #9eb3cf;
         }
@@ -128,7 +127,7 @@
             display: flex;
             flex-direction: column;
             height: 100%;
-            min-height: 245px;
+            min-height: 260px;
             padding: 25px;
             overflow: hidden;
             cursor: pointer;
@@ -246,11 +245,8 @@
 <body>
     <header>
         <div class="lab-name">Imamu-Lab</div>
-
         <h1>Mathematics Learning Hub</h1>
-
         <div class="divider" aria-hidden="true"></div>
-
         <p>
             数学教育のための教材ポータル<br>
             授業・演習・研修で活用できるWeb教材を提供
@@ -271,12 +267,10 @@
             >
                 <article class="card">
                     <h3>円順列・ネックレス配列教材</h3>
-
                     <p>
                         円順列やネックレス配列の考え方を視覚的に学習できる教材です。
                         回転による同一視や対称性を扱いながら、場合の数に対する理解を深めます。
                     </p>
-
                     <span class="tag">数学A ＞ 場合の数</span>
                 </article>
             </a>
@@ -291,13 +285,47 @@
             >
                 <article class="card">
                     <h3>単位円と角度</h3>
-
                     <p>
                         単位円上の点をマウスや指で動かし、角度と象限の関係を視覚的に確認できる教材です。
                         負の角や360°を超える角にも対応し、一般角の理解を深めます。
                     </p>
-
                     <span class="tag">数学Ⅱ ＞ 三角関数</span>
+                </article>
+            </a>
+
+            <!-- 教材3：角の2倍の作図 -->
+            <a
+                class="card-link"
+                href="./kaku_2bai_interactive_v3.html"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="角の2倍の作図教材を新しいタブで開く"
+            >
+                <article class="card">
+                    <h3>角の2倍の作図</h3>
+                    <p>
+                        点や角度を自由に動かしながら、与えられた角の2倍の角を作図する手順を段階的に確認できる教材です。
+                        円の交点を利用する作図の仕組みを、操作を通して視覚的に理解できます。
+                    </p>
+                    <span class="tag">中学校数学 ＞ 作図</span>
+                </article>
+            </a>
+
+            <!-- 教材4：四角形PQRSと平行条件 -->
+            <a
+                class="card-link"
+                href="./PQRS_parallel_question_auto_labels.html"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="四角形PQRSと平行条件教材を新しいタブで開く"
+            >
+                <article class="card">
+                    <h3>四角形PQRSと平行条件</h3>
+                    <p>
+                        四角形の頂点を動かし、角の大きさの関係から2直線が平行になる条件を考察する教材です。
+                        角度の自動表示と辺の色分けを通して、平行線の性質と判定を視覚的に確認できます。
+                    </p>
+                    <span class="tag">中学校数学 ＞ 平行線と角</span>
                 </article>
             </a>
 
