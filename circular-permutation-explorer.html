@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>円順列の並べ方を探索しよう</title>
+  <style>
+    :root{--ink:#263238;--muted:#64727a;--paper:#fbfaf6;--panel:#fff;--line:#d8d4c8;--accent:#355a75;--accent2:#6b455d;--soft:#e8f0f5;--gold:#b4862d;--goldsoft:#fff5d7;--green:#52745e;--shadow:0 7px 22px rgba(42,52,57,.08)}
+    *{box-sizing:border-box} body{margin:0;min-height:100vh;color:var(--ink);background:linear-gradient(rgba(80,90,90,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(80,90,90,.025) 1px,transparent 1px),var(--paper);background-size:24px 24px;font-family:"Yu Gothic","Hiragino Kaku Gothic ProN",Meiryo,sans-serif;line-height:1.65}
+    button,select{font:inherit}.page{width:min(1180px,calc(100% - 28px));margin:auto;padding:26px 0 48px}header{border-bottom:2px solid var(--accent);padding-bottom:14px;margin-bottom:18px}h1{margin:0 0 4px;color:#243f52;font-family:"Yu Mincho","Hiragino Mincho ProN",serif;font-size:clamp(1.55rem,4vw,2.25rem)}header p{margin:0;color:var(--muted)}
+    .card{background:var(--panel);border:1px solid var(--line);border-radius:11px;box-shadow:var(--shadow)}.toolbar{display:flex;flex-wrap:wrap;gap:12px 18px;align-items:center;padding:13px 16px;margin-bottom:16px}.toolbar label{font-weight:700}.toolbar select{padding:8px 30px 8px 10px;border:1px solid #aeb9be;border-radius:6px;background:#fff}.metrics{display:flex;flex-wrap:wrap;gap:8px;margin-left:auto}.metric{padding:6px 10px;border-radius:6px;background:#f1f5f7;color:#395363;font-weight:700;font-size:.9rem}
+    .learning-guide{margin:-4px 0 16px;padding:11px 15px;border-left:5px solid var(--accent);background:#f3f7f9;color:#395363}.learning-guide p{margin:0}.operation{display:grid;grid-template-columns:260px minmax(230px,.75fr) minmax(250px,.85fr);gap:16px;padding:18px;margin-bottom:18px;align-items:stretch}.circle-block{display:flex;align-items:center;justify-content:center}.circle-stage{position:relative;width:245px;aspect-ratio:1;margin:auto;touch-action:none}.guide-circle{position:absolute;inset:15%;border:3px solid #73848d;border-radius:50%;background:radial-gradient(circle,#fff 0 54%,#f4f7f8 55% 100%)}.top-mark{position:absolute;left:50%;top:5%;transform:translateX(-50%);color:var(--muted);font-size:.72rem}.rotor{position:absolute;inset:0;transition:transform .42s cubic-bezier(.25,.75,.25,1)}
+    .letter-node{position:absolute;left:50%;top:50%;width:43px;aspect-ratio:1;display:grid;place-items:center;color:#1f3c4d;background:#fff;border:2px solid var(--accent);border-radius:50%;box-shadow:0 4px 9px rgba(41,65,78,.14);font-family:Georgia,"Times New Roman",serif;font-size:1.25rem;font-weight:700;cursor:grab;user-select:none;touch-action:none;transition:transform .42s cubic-bezier(.25,.75,.25,1),background .15s,box-shadow .15s}.letter-node.dragging{cursor:grabbing;background:var(--goldsoft);box-shadow:0 0 0 5px rgba(180,134,45,.18);z-index:4}.letter-node.drop-target{background:#e4f1e7;border-color:var(--green);box-shadow:0 0 0 5px rgba(82,116,94,.2)}
+    .controls-panel,.options-panel{display:flex;flex-direction:column;justify-content:center;padding:14px;border:1px solid #d5dcdf;border-radius:9px;background:#fcfdfd}.block-title{margin:0 0 10px;color:#304d5f;font-family:"Yu Mincho","Hiragino Mincho ProN",serif;font-size:1.12rem}.current{padding:11px 12px;margin-bottom:12px;background:var(--soft);border-left:5px solid var(--accent);border-radius:6px}.current-row{display:flex;justify-content:space-between;gap:8px;align-items:baseline;flex-wrap:wrap}.sequence{font:700 clamp(1.18rem,3vw,1.65rem) Consolas,"Courier New",monospace;letter-spacing:.08em;color:#173d55}.buttons{display:flex;flex-wrap:wrap;gap:9px}.basic-buttons{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.option-list{display:flex;flex-direction:column;gap:11px}.option-item{padding-bottom:10px;border-bottom:1px solid #e1e5e7}.option-item:last-child{padding-bottom:0;border-bottom:0}.option-item .btn{width:100%}.option-description{margin:5px 2px 0;color:var(--muted);font-size:.83rem;line-height:1.45}.btn{padding:9px 14px;border:1px solid #28485f;border-radius:7px;color:#fff;background:var(--accent);cursor:pointer;box-shadow:0 2px 0 #203e52}.btn.secondary{background:var(--accent2);border-color:#523346;box-shadow:0 2px 0 #452b3b}.btn.assist{background:var(--green);border-color:#3f5d49;box-shadow:0 2px 0 #334c3b}.btn.light{color:#314a58;background:#f6f8f9;border-color:#9eacb4;box-shadow:0 2px 0 #bbc4c9}.btn:hover{filter:brightness(1.07)}.btn:active{transform:translateY(1px);box-shadow:none}.btn:disabled{opacity:.55;cursor:wait}.help{margin:12px 0 0;color:var(--muted);font-size:.9rem}.message{margin:12px 0 0;padding:9px 11px;min-height:2.8em;border:1px solid #e2d19c;border-radius:6px;background:#fffaf0;color:#5b4a1e}
+    .history-head{display:flex;flex-wrap:wrap;align-items:end;justify-content:space-between;gap:10px;margin:0 0 11px}.history-head h2{margin:0;color:#304d5f;font-family:"Yu Mincho","Hiragino Mincho ProN",serif;font-size:1.45rem}.history-head p{margin:2px 0 0;color:var(--muted);font-size:.91rem}.progress-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:13px}.progress-box{padding:10px 12px}.progress-label{display:flex;justify-content:space-between;gap:8px;font-size:.88rem;color:var(--muted)}progress{width:100%;height:11px;accent-color:var(--accent)}
+    #groups{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:12px;align-items:start}.group-card{padding:12px;border:1px solid #cfd6d9;border-top:4px solid var(--accent);border-radius:8px;background:#fff;transition:box-shadow .2s,background .2s}.group-title{display:flex;justify-content:space-between;gap:8px;align-items:baseline;padding-bottom:7px;border-bottom:1px solid #e0e4e6}.group-title strong{font-family:Consolas,"Courier New",monospace;letter-spacing:.05em}.group-count{color:var(--muted);font-size:.82rem;white-space:nowrap}.member-list{display:flex;flex-wrap:wrap;gap:7px;margin:9px 0 0;padding:0;list-style:none}.member{padding:5px 8px;border:1px solid #d8dee1;border-radius:5px;background:#f8f9f9;font:700 .91rem Consolas,"Courier New",monospace;letter-spacing:.04em}.flash{animation:flash .9s ease-out}@keyframes flash{20%,65%{background:var(--goldsoft);border-color:var(--gold);box-shadow:0 0 0 4px rgba(213,165,58,.22),0 0 18px rgba(213,165,58,.45)}}.complete{margin-top:16px;padding:16px;border:2px solid var(--green);border-radius:9px;background:#edf6ef;text-align:center}.complete h3{margin:0 0 4px;color:#35563f}.complete p{margin:0}.hidden{display:none!important}
+    .site-footer{margin-top:28px;padding-top:12px;border-top:1px solid rgba(100,114,122,.22);text-align:center;color:#8a9499;font-size:.72rem;letter-spacing:.04em}.site-footer p{margin:0}@media(max-width:920px){.operation{grid-template-columns:240px minmax(220px,1fr)}.options-panel{grid-column:1/-1}.option-list{display:grid;grid-template-columns:repeat(3,1fr)}.option-item{padding:0 10px 0 0;border-bottom:0;border-right:1px solid #e1e5e7}.option-item:last-child{border-right:0}}@media(max-width:760px){.operation{grid-template-columns:1fr}.circle-block,.controls-panel,.options-panel{grid-column:1}.metrics{width:100%;margin-left:0}.circle-stage{width:min(245px,75vw)}.progress-grid{grid-template-columns:1fr}.option-list{display:flex}.option-item{padding:0 0 10px;border-right:0;border-bottom:1px solid #e1e5e7}.option-item:last-child{border-bottom:0}}@media(max-width:430px){.page{width:calc(100% - 18px)}.operation{padding:12px}.btn{width:100%}#groups{grid-template-columns:1fr}}@media(max-width:350px){.basic-buttons{grid-template-columns:1fr}}@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+  </style>
+</head>
+<body>
+<main class="page">
+  <header><h1>円順列の並べ方を探索しよう</h1><p>回転と並べ替えを行い、通常の順列が円順列のグループに分かれていく様子を確かめます。</p></header>
+
+  <section class="toolbar card" aria-label="設定と集計">
+    <label for="letterCount">文字の個数</label>
+    <select id="letterCount"><option value="3">3文字</option><option value="4">4文字</option><option value="5" selected>5文字</option><option value="6">6文字</option><option value="7">7文字</option><option value="8">8文字</option><option value="9">9文字</option><option value="10">10文字</option></select>
+    <div class="metrics"><span id="foundMetric" class="metric">記録 1 / 120通り</span><span id="groupMetric" class="metric">円順列 1 / 24グループ</span></div>
+  </section>
+
+  <section class="learning-guide card" aria-label="活動の目標">
+    <p id="activityGuide">すべての通常の順列を集め、円順列のグループ分けを確かめましょう。</p>
+  </section>
+
+  <section class="operation card" aria-label="文字の操作">
+    <div class="circle-block">
+      <div class="circle-stage">
+        <div class="guide-circle"></div><div class="top-mark">基準位置</div><div id="rotor" class="rotor"></div>
+      </div>
+    </div>
+
+    <div class="controls-panel" aria-labelledby="basicTitle">
+      <h2 id="basicTitle" class="block-title">基本操作</h2>
+      <div class="current">
+        <div class="current-row"><strong>現在の表示</strong><span id="currentValue" class="sequence">ABCDE</span></div>
+        <div class="current-row"><span>所属する代表</span><strong id="representativeValue">ABCDE</strong></div>
+      </div>
+      <div class="basic-buttons">
+        <button id="leftButton" class="btn" type="button">← 左に回転</button>
+        <button id="rightButton" class="btn" type="button">右に回転 →</button>
+      </div>
+      <p class="help">文字を別の文字へドラッグすると、2文字の位置を交換します。並べ替え後も履歴は継続されます。</p>
+      <p id="message" class="message" aria-live="polite">回転または並べ替えを行い、並びを集めましょう。</p>
+    </div>
+
+    <aside class="options-panel" aria-labelledby="optionsTitle">
+      <h2 id="optionsTitle" class="block-title">補助機能</h2>
+      <div class="option-list">
+        <div class="option-item">
+          <button id="randomButton" class="btn secondary" type="button">ランダムに並べ替える</button>
+          <p class="option-description">文字をランダムな順番に並べ替えます。</p>
+        </div>
+        <div class="option-item">
+          <button id="undiscoveredButton" class="btn assist" type="button">未発見を1つ表示</button>
+          <p class="option-description">まだ履歴にない並びを自動で表示し、記録します。</p>
+        </div>
+        <div class="option-item">
+          <button id="sortButton" class="btn light" type="button">代表を辞書順に整理</button>
+          <p class="option-description">各グループの代表と表示順を辞書順に整理します。</p>
+        </div>
+      </div>
+    </aside>
+  </section>
+
+  <section aria-labelledby="historyTitle">
+    <div class="history-head"><div><h2 id="historyTitle">発見した並べ方</h2><p>回転して一致する文字列を、同じ代表グループにまとめています。</p></div></div>
+    <div class="progress-grid">
+      <div class="progress-box card"><div class="progress-label"><span>通常の順列</span><span id="permutationProgressText">1 / 120</span></div><progress id="permutationProgress" value="1" max="120"></progress></div>
+      <div class="progress-box card"><div class="progress-label"><span>円順列のグループ</span><span id="groupProgressText">1 / 24</span></div><progress id="groupProgress" value="1" max="24"></progress></div>
+    </div>
+    <div id="groups"></div>
+    <div id="completeBox" class="complete hidden" aria-live="polite"><h3>すべての並べ方がそろいました</h3><p id="completeText"></p></div>
+  </section>
+
+  <footer class="site-footer">
+    <p>Produced by Imamu-Lab</p>
+  </footer>
+</main>
+<script>
+(() => {
+  "use strict";
+  const alphabet="ABCDEFGHIJ".split("");
+  const $=id=>document.getElementById(id);
+  const els={count:$("letterCount"),rotor:$("rotor"),current:$("currentValue"),rep:$("representativeValue"),left:$("leftButton"),right:$("rightButton"),random:$("randomButton"),undiscovered:$("undiscoveredButton"),sort:$("sortButton"),message:$("message"),groups:$("groups"),foundMetric:$("foundMetric"),groupMetric:$("groupMetric"),permText:$("permutationProgressText"),groupText:$("groupProgressText"),permProgress:$("permutationProgress"),groupProgress:$("groupProgress"),complete:$("completeBox"),completeText:$("completeText"),activityGuide:$("activityGuide")};
+  let count=5, letters=[], rotationSteps=0, groups=new Map(), seen=new Set(), canonicalMode=false, busy=false, hintIndex=0, drag=null;
+  const factorial=n=>{let v=1;for(let i=2;i<=n;i++)v*=i;return v};
+  const rotations=s=>Array.from({length:s.length},(_,i)=>s.slice(i)+s.slice(0,i));
+  const canonical=s=>rotations(s).sort()[0];
+  const currentSequence=()=>{const k=((rotationSteps%count)+count)%count;return k?letters.slice(count-k).concat(letters.slice(0,count-k)).join(""):letters.join("")};
+  function createNodes(){els.rotor.replaceChildren();const r=40;letters.forEach((ch,i)=>{const a=(360/count)*i-90,rad=a*Math.PI/180,node=document.createElement("span");node.className="letter-node";node.textContent=ch;node.dataset.index=i;node.style.left=`${50+Math.cos(rad)*r}%`;node.style.top=`${50+Math.sin(rad)*r}%`;node.addEventListener("pointerdown",startDrag);els.rotor.appendChild(node)});applyRotation()}
+  function applyRotation(){const deg=rotationSteps*(360/count);els.rotor.style.transform=`rotate(${deg}deg)`;els.rotor.querySelectorAll(".letter-node").forEach(n=>n.style.transform=`translate(-50%,-50%) rotate(${-deg}deg)`)}
+  function flash(el){if(!el)return;el.classList.remove("flash");void el.offsetWidth;el.classList.add("flash");setTimeout(()=>el.classList.remove("flash"),950)}
+  function groupFor(seq){return groups.get(canonical(seq))}
+  function register(seq,source){let key=canonical(seq),g=groups.get(key),isNewGroup=false,isNewMember=false;if(!g){g={key,representative:canonicalMode?key:seq,firstFound:seq,members:[]};groups.set(key,g);isNewGroup=true}if(!seen.has(seq)){seen.add(seq);g.members.push(seq);isNewMember=true}renderGroups();updateSummary();els.current.textContent=seq;els.rep.textContent=g.representative;const card=els.groups.querySelector(`[data-key="${g.key}"]`),member=card?.querySelector(`[data-member="${seq}"]`);flash(isNewMember&&g.members.length>1?card:member||card);if(isNewGroup)els.message.textContent=`新しい円順列グループ「${g.representative}」を発見しました。`;else if(isNewMember)els.message.textContent=`「${seq}」を代表「${g.representative}」のグループへ追加しました。`;else els.message.textContent=`「${seq}」は記録済みです。該当する履歴を光らせました。`;if(source==="hint")els.message.textContent=`未発見だった「${seq}」を表示し、履歴へ登録しました。`;return {g,isNewGroup,isNewMember}}
+  function renderGroups(){const ordered=[...groups.values()];if(canonicalMode)ordered.sort((a,b)=>a.representative.localeCompare(b.representative,"en"));els.groups.replaceChildren();ordered.forEach((g,idx)=>{const card=document.createElement("article");card.className="group-card";card.dataset.key=g.key;const head=document.createElement("div");head.className="group-title";const title=document.createElement("strong");title.textContent=`代表：${g.representative}`;const total=document.createElement("span");total.className="group-count";total.textContent=`${g.members.length} / ${count}通り`;head.append(title,total);const ul=document.createElement("ul");ul.className="member-list";const members=canonicalMode?[...g.members].sort():g.members;members.forEach(s=>{const li=document.createElement("li");li.className="member";li.dataset.member=s;li.textContent=s;ul.appendChild(li)});card.append(head,ul);els.groups.appendChild(card)})}
+  function updateSummary(){const total=factorial(count),groupTotal=total/count;els.foundMetric.textContent=`記録 ${seen.size} / ${total.toLocaleString()}通り`;els.groupMetric.textContent=`円順列 ${groups.size} / ${groupTotal.toLocaleString()}グループ`;els.permText.textContent=`${seen.size.toLocaleString()} / ${total.toLocaleString()}`;els.groupText.textContent=`${groups.size.toLocaleString()} / ${groupTotal.toLocaleString()}`;els.permProgress.max=total;els.permProgress.value=seen.size;els.groupProgress.max=groupTotal;els.groupProgress.value=groups.size;const done=seen.size===total;els.complete.classList.toggle("hidden",!done);if(done)els.completeText.textContent=`通常の順列 ${total.toLocaleString()}通り ÷ 1グループ ${count}通り ＝ 円順列 ${groupTotal.toLocaleString()}グループ`;els.undiscovered.disabled=done}
+  function reset(){count=Number(els.count.value);letters=alphabet.slice(0,count);rotationSteps=0;groups=new Map();seen=new Set();canonicalMode=false;busy=false;hintIndex=0;els.sort.disabled=false;els.sort.textContent="代表を辞書順に整理";createNodes();register(letters.join(""),"reset");els.activityGuide.textContent=count<=5?"すべての通常の順列を集め、円順列のグループ分けを確かめましょう。":"6文字以上では、実際に発見した並びを探索記録として蓄積します。";els.message.textContent="回転または並べ替えを行い、並びを集めましょう。"}
+  function setArrangement(seq,source){letters=seq.split("");rotationSteps=0;els.rotor.style.transition="none";createNodes();void els.rotor.offsetWidth;els.rotor.style.transition="";register(seq,source)}
+  function rotate(dir){if(busy)return;busy=true;rotationSteps+=dir;applyRotation();const seq=currentSequence();els.current.textContent=seq;setTimeout(()=>{register(seq,"rotate");busy=false},440)}
+  function shuffle(){const a=currentSequence().split("");for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}setArrangement(a.join(""),"random")}
+  function permutationAt(index){const pool=alphabet.slice(0,count),out=[];for(let remaining=count;remaining>=1;remaining--){const f=factorial(remaining-1),pos=Math.floor(index/f)%remaining;out.push(pool.splice(pos,1)[0]);index%=f}return out.join("")}
+  function showUndiscovered(){const total=factorial(count);if(seen.size>=total)return;for(let checked=0;checked<total;checked++){const seq=permutationAt(hintIndex%total);hintIndex=(hintIndex+1)%total;if(!seen.has(seq)){setArrangement(seq,"hint");return}}}
+  function sortRepresentatives(){canonicalMode=true;groups.forEach(g=>g.representative=g.key);els.sort.disabled=true;els.sort.textContent="辞書順に整理済み";renderGroups();const g=groupFor(currentSequence());els.rep.textContent=g.representative;els.message.textContent="各グループの代表を、回転状態の中で辞書順が最も早い文字列に変更し、グループと文字列を並べ替えました。"}
+  function startDrag(e){if(busy)return;e.preventDefault();const node=e.currentTarget;drag={source:Number(node.dataset.index),sourceNode:node,target:null,moved:false};node.classList.add("dragging");node.setPointerCapture(e.pointerId);node.addEventListener("pointermove",moveDrag);node.addEventListener("pointerup",endDrag,{once:true});node.addEventListener("pointercancel",endDrag,{once:true})}
+  function moveDrag(e){if(!drag)return;drag.moved=true;document.querySelectorAll(".drop-target").forEach(n=>n.classList.remove("drop-target"));const hit=document.elementFromPoint(e.clientX,e.clientY)?.closest(".letter-node");if(hit&&hit!==drag.sourceNode){drag.target=Number(hit.dataset.index);hit.classList.add("drop-target")}else drag.target=null}
+  function endDrag(e){if(!drag)return;drag.sourceNode.releasePointerCapture?.(e.pointerId);drag.sourceNode.removeEventListener("pointermove",moveDrag);document.querySelectorAll(".letter-node").forEach(n=>n.classList.remove("dragging","drop-target"));if(drag.moved&&drag.target!==null){const step=((rotationSteps%count)+count)%count;const sourceVisible=(drag.source+step)%count,targetVisible=(drag.target+step)%count,a=currentSequence().split("");[a[sourceVisible],a[targetVisible]]=[a[targetVisible],a[sourceVisible]];setArrangement(a.join(""),"drag")}drag=null}
+  els.count.addEventListener("change",reset);els.left.addEventListener("click",()=>rotate(-1));els.right.addEventListener("click",()=>rotate(1));els.random.addEventListener("click",shuffle);els.undiscovered.addEventListener("click",showUndiscovered);els.sort.addEventListener("click",sortRepresentatives);reset();
+})();
+</script>
+</body>
+</html>
