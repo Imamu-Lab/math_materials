@@ -200,6 +200,54 @@
             font-size: 0.82rem;
         }
 
+
+        .category-section {
+            margin-bottom: 48px;
+        }
+
+        .category-heading {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 22px;
+        }
+
+        .category-title {
+            flex: 0 0 auto;
+            color: var(--accent);
+            font-size: 1.25rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-shadow:
+                0 0 8px rgba(0, 212, 255, 0.75),
+                0 0 18px rgba(0, 212, 255, 0.35);
+        }
+
+        .category-line {
+            flex: 1 1 auto;
+            height: 1px;
+            background: linear-gradient(
+                90deg,
+                rgba(0, 212, 255, 0.9),
+                rgba(0, 212, 255, 0.18),
+                transparent
+            );
+            box-shadow: 0 0 8px rgba(0, 212, 255, 0.35);
+        }
+
+        .category-count {
+            flex: 0 0 auto;
+            color: var(--subtext);
+            font-size: 0.82rem;
+            letter-spacing: 0.04em;
+        }
+
+        .empty-message {
+            padding: 2px 4px 0;
+            color: rgba(158, 179, 207, 0.72);
+            font-size: 0.92rem;
+        }
+
         footer {
             padding: 30px 20px;
             color: var(--subtext);
@@ -217,6 +265,19 @@
             header {
                 padding-top: 45px;
             }
+
+            .category-heading {
+                gap: 10px;
+            }
+
+            .category-title {
+                font-size: 1.12rem;
+            }
+
+            .category-count {
+                font-size: 0.76rem;
+            }
+
 
             .material-grid {
                 grid-template-columns: 1fr;
@@ -256,103 +317,173 @@
     <main>
         <h2 class="section-title">教材一覧</h2>
 
-        <div class="material-grid">
-            <!-- 教材1：円順列・ネックレス配列 -->
-            <a
-                class="card-link"
-                href="./circle_necklace_math.html"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="円順列・ネックレス配列教材を新しいタブで開く"
-            >
-                <article class="card">
-                    <h3>円順列・ネックレス配列教材</h3>
-                    <p>
-                        中学校の教科書に掲載されている問題をもとに、多角形の内部と円の内部が重なる部分（A）と、
-                        多角形の外部と円の内部が重なる部分（B）の面積の性質について、図を操作しながら考察する教材です。
-                    </p>
-                    <span class="tag">数学A ＞ 場合の数</span>
-                </article>
-            </a>
+        <!-- 中学校 -->
+        <section class="category-section" aria-labelledby="category-junior-high">
+            <div class="category-heading">
+                <h3 class="category-title" id="category-junior-high">中学校</h3>
+                <div class="category-line" aria-hidden="true"></div>
+                <span class="category-count">3教材</span>
+            </div>
 
-            <!-- 教材2：単位円と角度 -->
-            <a
-                class="card-link"
-                href="./unit-circle-angle.html"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="単位円と角度教材を新しいタブで開く"
-            >
-                <article class="card">
-                    <h3>単位円と角度</h3>
-                    <p>
-                        単位円上の点をマウスや指で動かし、角度と象限の関係を視覚的に確認できる教材です。
-                        負の角や360°を超える角にも対応し、一般角の理解を深めます。
-                    </p>
-                    <span class="tag">数学Ⅱ ＞ 三角関数</span>
-                </article>
-            </a>
+            <div class="material-grid">
+                <a
+                    class="card-link"
+                    href="./circle_necklace_math.html"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="外接して並ぶ円と多角形で作る面積の考察を新しいタブで開く"
+                >
+                    <article class="card">
+                        <h3>外接して並ぶ円と多角形で作る面積の考察</h3>
+                        <p>
+                            中学校の教科書に掲載されている問題をもとに、多角形の内部と円の内部が重なる部分（A）と、
+                            多角形の外部と円の内部が重なる部分（B）の面積の性質について、図を操作しながら考察する教材です。
+                        </p>
+                        <span class="tag">中学校 ＞ 面積</span>
+                    </article>
+                </a>
 
-            <!-- 教材3：角の2倍の作図 -->
-            <a
-                class="card-link"
-                href="./kaku_2bai_interactive_v3.html"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="角の2倍の作図教材を新しいタブで開く"
-            >
-                <article class="card">
-                    <h3>角の2倍の作図</h3>
-                    <p>
-                        点や角度を自由に動かしながら、与えられた角の2倍の角を作図する手順を段階的に確認できる教材です。
-                        円の交点を利用する作図の仕組みを、操作を通して視覚的に理解できます。
-                    </p>
-                    <span class="tag">中学校数学 ＞ 作図</span>
-                </article>
-            </a>
+                <a
+                    class="card-link"
+                    href="./kaku_2bai_interactive_v3.html"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="角の2倍の作図教材を新しいタブで開く"
+                >
+                    <article class="card">
+                        <h3>角の2倍の作図</h3>
+                        <p>
+                            点や角度を自由に動かしながら、与えられた角の2倍の角を作図する手順を段階的に確認できる教材です。
+                            円の交点を利用する作図の仕組みを、操作を通して視覚的に理解できます。
+                        </p>
+                        <span class="tag">中学校 ＞ 作図</span>
+                    </article>
+                </a>
 
-            <!-- 教材4：四角形PQRSと平行条件 -->
-            <a
-                class="card-link"
-                href="./PQRS_parallel_question_auto_labels.html"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="四角形PQRSと平行条件教材を新しいタブで開く"
-            >
-                <article class="card">
-                    <h3>四角形PQRSと平行条件</h3>
-                    <p>
-                        四角形の頂点を動かし、角の大きさの関係から2直線が平行になる条件を考察する教材です。
-                        角度の自動表示と辺の色分けを通して、平行線の性質と判定を視覚的に確認できます。
-                    </p>
-                    <span class="tag">中学校数学 ＞ 平行線と角</span>
-                </article>
-            </a>
+                <a
+                    class="card-link"
+                    href="./PQRS_parallel_question_auto_labels.html"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="四角形PQRSと平行条件教材を新しいタブで開く"
+                >
+                    <article class="card">
+                        <h3>四角形PQRSと平行条件</h3>
+                        <p>
+                            四角形の頂点を動かし、角の大きさの関係から2直線が平行になる条件を考察する教材です。
+                            角度の自動表示と辺の色分けを通して、平行線の性質と判定を視覚的に確認できます。
+                        </p>
+                        <span class="tag">中学校 ＞ 平行線と角</span>
+                    </article>
+                </a>
+            </div>
+        </section>
 
+        <!-- 数学I -->
+        <section class="category-section" aria-labelledby="category-math-1">
+            <div class="category-heading">
+                <h3 class="category-title" id="category-math-1">数学Ⅰ</h3>
+                <div class="category-line" aria-hidden="true"></div>
+                <span class="category-count">0教材</span>
+            </div>
+            <p class="empty-message">現在、掲載中の教材はありません。</p>
+        </section>
 
-            <!-- 教材5：円順列を探索しよう -->
-            <a
-                class="card-link"
-                href="./circular-permutation-explorer.html"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="円順列を探索しよう教材を新しいタブで開く"
-            >
-                <article class="card">
-                    <h3>円順列を探索しよう</h3>
-                    <p>
-                        文字を円形に並べて回転や並べ替えを行い、同じ円順列をグループごとに整理する教材です。
-                        通常の順列との違いを視覚的に確認できます。
-                    </p>
-                    <span class="tag">数学A ＞ 円順列</span>
-                </article>
-            </a>
+        <!-- 数学II -->
+        <section class="category-section" aria-labelledby="category-math-2">
+            <div class="category-heading">
+                <h3 class="category-title" id="category-math-2">数学Ⅱ</h3>
+                <div class="category-line" aria-hidden="true"></div>
+                <span class="category-count">1教材</span>
+            </div>
 
-            <!--
-            教材を追加するときは、上のa要素全体を複製し、
-            href、aria-label、教材名、説明文、タグを変更してください。
-            -->
-        </div>
+            <div class="material-grid">
+                <a
+                    class="card-link"
+                    href="./unit-circle-angle.html"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="単位円と角度教材を新しいタブで開く"
+                >
+                    <article class="card">
+                        <h3>単位円と角度</h3>
+                        <p>
+                            単位円上の点をマウスや指で動かし、角度と象限の関係を視覚的に確認できる教材です。
+                            負の角や360°を超える角にも対応し、一般角の理解を深めます。
+                        </p>
+                        <span class="tag">数学Ⅱ ＞ 三角関数</span>
+                    </article>
+                </a>
+            </div>
+        </section>
+
+        <!-- 数学III -->
+        <section class="category-section" aria-labelledby="category-math-3">
+            <div class="category-heading">
+                <h3 class="category-title" id="category-math-3">数学Ⅲ</h3>
+                <div class="category-line" aria-hidden="true"></div>
+                <span class="category-count">0教材</span>
+            </div>
+            <p class="empty-message">現在、掲載中の教材はありません。</p>
+        </section>
+
+        <!-- 数学A -->
+        <section class="category-section" aria-labelledby="category-math-a">
+            <div class="category-heading">
+                <h3 class="category-title" id="category-math-a">数学A</h3>
+                <div class="category-line" aria-hidden="true"></div>
+                <span class="category-count">1教材</span>
+            </div>
+
+            <div class="material-grid">
+                <a
+                    class="card-link"
+                    href="./circular-permutation-explorer.html"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="円順列を探索しよう教材を新しいタブで開く"
+                >
+                    <article class="card">
+                        <h3>円順列を探索しよう</h3>
+                        <p>
+                            文字を円形に並べて回転や並べ替えを行い、同じ円順列をグループごとに整理する教材です。
+                            通常の順列との違いを視覚的に確認できます。
+                        </p>
+                        <span class="tag">数学A ＞ 円順列</span>
+                    </article>
+                </a>
+            </div>
+        </section>
+
+        <!-- 数学B -->
+        <section class="category-section" aria-labelledby="category-math-b">
+            <div class="category-heading">
+                <h3 class="category-title" id="category-math-b">数学B</h3>
+                <div class="category-line" aria-hidden="true"></div>
+                <span class="category-count">0教材</span>
+            </div>
+            <p class="empty-message">現在、掲載中の教材はありません。</p>
+        </section>
+
+        <!-- 数学C -->
+        <section class="category-section" aria-labelledby="category-math-c">
+            <div class="category-heading">
+                <h3 class="category-title" id="category-math-c">数学C</h3>
+                <div class="category-line" aria-hidden="true"></div>
+                <span class="category-count">0教材</span>
+            </div>
+            <p class="empty-message">現在、掲載中の教材はありません。</p>
+        </section>
+
+        <!-- その他 -->
+        <section class="category-section" aria-labelledby="category-other">
+            <div class="category-heading">
+                <h3 class="category-title" id="category-other">その他</h3>
+                <div class="category-line" aria-hidden="true"></div>
+                <span class="category-count">0教材</span>
+            </div>
+            <p class="empty-message">現在、掲載中の教材はありません。</p>
+        </section>
     </main>
 
     <footer>
