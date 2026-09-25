@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>2次関数の平行移動</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 24px;
+      background: #f1f5f9;
+      color: #1e293b;
+      font-family: "Yu Gothic", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+    }
+    .container { max-width: 1000px; margin: 0 auto; }
+    h1 { margin: 0; text-align: center; color: #172554; font-size: 34px; }
+    .subtitle { margin: 8px 0 22px; text-align: center; color: #475569; }
+    .card {
+      padding: 28px;
+      background: white;
+      border-radius: 18px;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, .12);
+    }
+    .formula {
+      margin-bottom: 22px;
+      padding: 16px;
+      border: 2px solid #93c5fd;
+      border-radius: 12px;
+      background: #eff6ff;
+      color: #1d4ed8;
+      text-align: center;
+      font: bold 32px Georgia, "Times New Roman", serif;
+      transition: transform .15s, background-color .15s;
+    }
+    .formula.changed { transform: scale(1.015); background: #dbeafe; }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: flex-end;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    .input-group { display: flex; flex-direction: column; gap: 6px; }
+    .input-group label { font-weight: 700; }
+    .input-group small { color: #64748b; }
+    input[type="number"] {
+      width: 160px;
+      min-height: 50px;
+      padding: 10px;
+      border: 2px solid #94a3b8;
+      border-radius: 9px;
+      font-size: 21px;
+      text-align: center;
+    }
+    input[type="number"]:focus {
+      border-color: #2563eb;
+      outline: 4px solid rgba(37, 99, 235, .13);
+    }
+    button {
+      min-height: 50px;
+      padding: 12px 24px;
+      border: 0;
+      border-radius: 11px;
+      font-size: 17px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    button:active { transform: scale(.98); }
+    .draw-button { background: #2563eb; color: white; }
+    .draw-button:hover { background: #1d4ed8; }
+    .reset-button { background: #e2e8f0; color: #1e293b; }
+    .reset-button:hover { background: #cbd5e1; }
+    .message {
+      min-height: 58px;
+      margin-bottom: 18px;
+      padding: 14px;
+      border-left: 5px solid #2563eb;
+      border-radius: 8px;
+      background: #f8fafc;
+      font-size: 17px;
+      line-height: 1.6;
+    }
+    .message.pending { border-left-color: #f59e0b; background: #fffbeb; color: #92400e; }
+    .message.error { border-left-color: #dc2626; background: #fff1f2; color: #991b1b; }
+    .graph-wrapper { overflow: hidden; border: 1px solid #cbd5e1; border-radius: 12px; background: white; }
+    canvas { display: block; width: 100%; height: 560px; }
+    .legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 18px 26px; margin-top: 16px; }
+    .legend-item { display: flex; align-items: center; gap: 8px; }
+    .line { display: inline-block; width: 38px; height: 4px; border-radius: 3px; }
+    .original { border-top: 4px dashed #64748b; height: 0; }
+    .moved { background: #2563eb; }
+    .point { width: 14px; height: 14px; border-radius: 50%; background: #dc2626; }
+    .observation { margin-top: 20px; padding: 16px 20px; border: 1px solid #fbbf24; border-radius: 12px; background: #fffbeb; }
+    .observation h2 { margin: 0 0 8px; color: #92400e; font-size: 20px; }
+    .observation ul { margin: 0; padding-left: 24px; line-height: 1.8; }
+    @media (max-width: 620px) {
+      body { padding: 12px; }
+      h1 { font-size: 26px; }
+      .card { padding: 15px; }
+      .formula { font-size: 27px; }
+      .controls { align-items: stretch; }
+      .input-group, input[type="number"], button { width: 100%; }
+      canvas { height: 480px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <h1>2次関数の平行移動</h1>
+    <p class="subtitle">pの値を変えて、式とグラフの変化を調べよう</p>
+
+    <section class="card">
+      <div id="formula" class="formula">y = 2x²</div>
+
+      <div class="controls">
+        <div class="input-group">
+          <label for="pInput">pの値</label>
+          <input id="pInput" type="number" value="0" min="-5" max="5" step="1" inputmode="numeric">
+          <small>整数で入力：−5 から 5</small>
+        </div>
+        <button id="drawButton" class="draw-button" type="button">▶ グラフを描画</button>
+        <button id="resetButton" class="reset-button" type="button">↻ p = 0 に戻す</button>
+      </div>
+
+      <div id="message" class="message" role="status" aria-live="polite">
+        pの値を選び、「グラフを描画」を押してください。
+      </div>
+
+      <div class="graph-wrapper">
+        <canvas id="graphCanvas" aria-label="2次関数のグラフ"></canvas>
+      </div>
+
+      <div class="legend">
+        <div class="legend-item"><span class="line original"></span><span>元のグラフ y = 2x²</span></div>
+        <div class="legend-item"><span class="line moved"></span><span id="drawnFormula">描画済み：y = 2x²</span></div>
+        <div class="legend-item"><span class="point"></span><span id="vertexLabel">頂点 (0, 0)</span></div>
+      </div>
+
+      <aside class="observation">
+        <h2>観察してみよう</h2>
+        <ul>
+          <li>pが正のとき、グラフはどちらへ移動するだろう。</li>
+          <li>pが負のとき、グラフはどちらへ移動するだろう。</li>
+          <li>式の中の符号と移動方向の関係を考えよう。</li>
+        </ul>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    "use strict";
+    const canvas = document.getElementById("graphCanvas");
+    const ctx = canvas.getContext("2d");
+    const pInput = document.getElementById("pInput");
+    const formula = document.getElementById("formula");
+    const message = document.getElementById("message");
+    const drawnFormula = document.getElementById("drawnFormula");
+    const vertexLabel = document.getElementById("vertexLabel");
+    const range = { xMin: -10, xMax: 10, yMin: -2, yMax: 20 };
+    let inputP = 0;
+    let drawnP = 0;
+
+    function formulaText(p) {
+      if (p === 0) return "y = 2x²";
+      return p > 0 ? `y = 2(x − ${p})²` : `y = 2(x + ${Math.abs(p)})²`;
+    }
+
+    function validInteger(value) {
+      const p = Number(value);
+      return value !== "" && Number.isInteger(p) && p >= -5 && p <= 5;
+    }
+
+    function updateFormulaFromInput() {
+      const value = pInput.value.trim();
+      message.className = "message";
+      if (!validInteger(value)) {
+        formula.textContent = "pには−5から5までの整数を入力してください";
+        message.textContent = "入力値を確認してください。グラフは変更されていません。";
+        message.classList.add("error");
+        return;
+      }
+      inputP = Number(value);
+      formula.textContent = formulaText(inputP);
+      formula.classList.add("changed");
+      setTimeout(() => formula.classList.remove("changed"), 160);
+      if (inputP === drawnP) {
+        message.textContent = "現在表示中のグラフと式が一致しています。";
+      } else {
+        message.textContent = "式が変わりました。グラフはまだ更新されていません。";
+        message.classList.add("pending");
+      }
+    }
+
+    function movementText(p) {
+      if (p === 0) return "p = 0 なので、移動後のグラフは元のグラフと重なります。";
+      return p > 0
+        ? `元のグラフを右に ${p} だけ平行移動したグラフです。`
+        : `元のグラフを左に ${Math.abs(p)} だけ平行移動したグラフです。`;
+    }
+
+    function resizeCanvas() {
+      const rect = canvas.getBoundingClientRect();
+      const ratio = window.devicePixelRatio || 1;
+      canvas.width = Math.round(rect.width * ratio);
+      canvas.height = Math.round(rect.height * ratio);
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      drawGraph(drawnP);
+    }
+
+    function drawGraph(p) {
+      const width = canvas.getBoundingClientRect().width;
+      const height = canvas.getBoundingClientRect().height;
+      const toX = x => ((x - range.xMin) / (range.xMax - range.xMin)) * width;
+      const toY = y => height - ((y - range.yMin) / (range.yMax - range.yMin)) * height;
+
+      ctx.clearRect(0, 0, width, height);
+      ctx.fillStyle = "#fff";
+      ctx.fillRect(0, 0, width, height);
+
+      ctx.save();
+      ctx.strokeStyle = "#e2e8f0";
+      ctx.lineWidth = 1;
+      for (let x = range.xMin; x <= range.xMax; x++) {
+        ctx.beginPath(); ctx.moveTo(toX(x), 0); ctx.lineTo(toX(x), height); ctx.stroke();
+      }
+      for (let y = Math.ceil(range.yMin); y <= range.yMax; y++) {
+        ctx.beginPath(); ctx.moveTo(0, toY(y)); ctx.lineTo(width, toY(y)); ctx.stroke();
+      }
+      ctx.restore();
+
+      const ox = toX(0), oy = toY(0);
+      ctx.save();
+      ctx.strokeStyle = "#334155"; ctx.fillStyle = "#334155"; ctx.lineWidth = 2; ctx.font = "13px sans-serif";
+      ctx.beginPath(); ctx.moveTo(0, oy); ctx.lineTo(width, oy); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(ox, 0); ctx.lineTo(ox, height); ctx.stroke();
+      for (let x = range.xMin; x <= range.xMax; x++) {
+        ctx.beginPath(); ctx.moveTo(toX(x), oy - 4); ctx.lineTo(toX(x), oy + 4); ctx.stroke();
+        if (x !== 0 && x % 2 === 0) { ctx.textAlign = "center"; ctx.textBaseline = "top"; ctx.fillText(String(x), toX(x), oy + 7); }
+      }
+      for (let y = Math.ceil(range.yMin); y <= range.yMax; y++) {
+        ctx.beginPath(); ctx.moveTo(ox - 4, toY(y)); ctx.lineTo(ox + 4, toY(y)); ctx.stroke();
+        if (y !== 0 && y % 2 === 0) { ctx.textAlign = "right"; ctx.textBaseline = "middle"; ctx.fillText(String(y), ox - 7, toY(y)); }
+      }
+      ctx.textAlign = "right"; ctx.textBaseline = "top"; ctx.fillText("0", ox - 6, oy + 6);
+      ctx.font = "bold 16px sans-serif";
+      ctx.textAlign = "right"; ctx.textBaseline = "bottom"; ctx.fillText("x", width - 8, oy - 8);
+      ctx.textAlign = "left"; ctx.textBaseline = "top"; ctx.fillText("y", ox + 8, 8);
+      ctx.restore();
+
+      function parabola(rule, color, lineWidth, dash) {
+        ctx.save(); ctx.strokeStyle = color; ctx.lineWidth = lineWidth; ctx.setLineDash(dash || []); ctx.lineJoin = "round"; ctx.beginPath();
+        let started = false;
+        for (let x = range.xMin; x <= range.xMax; x += .02) {
+          const y = rule(x);
+          if (y < range.yMin - 2 || y > range.yMax + 2) { started = false; continue; }
+          if (!started) { ctx.moveTo(toX(x), toY(y)); started = true; } else ctx.lineTo(toX(x), toY(y));
+        }
+        ctx.stroke(); ctx.restore();
+      }
+
+      parabola(x => 2 * x * x, "#64748b", 3, [8, 6]);
+      parabola(x => 2 * (x - p) * (x - p), "#2563eb", 4);
+
+      const vx = toX(p), vy = toY(0);
+      ctx.save();
+      ctx.beginPath(); ctx.arc(vx, vy, 8, 0, Math.PI * 2); ctx.fillStyle = "#fff"; ctx.fill();
+      ctx.beginPath(); ctx.arc(vx, vy, 6, 0, Math.PI * 2); ctx.fillStyle = "#dc2626"; ctx.fill();
+      ctx.font = "bold 15px sans-serif"; ctx.fillStyle = "#b91c1c"; ctx.textAlign = "center"; ctx.textBaseline = "bottom";
+      ctx.fillText(`頂点 (${p}, 0)`, vx, vy - 12);
+      ctx.restore();
+    }
+
+    function executeDrawing() {
+      const value = pInput.value.trim();
+      if (!validInteger(value)) {
+        message.className = "message error";
+        message.textContent = "pには−5から5までの整数を入力してください。";
+        pInput.focus();
+        return;
+      }
+      inputP = Number(value);
+      drawnP = inputP;
+      message.className = "message";
+      message.textContent = movementText(drawnP);
+      drawnFormula.textContent = `描画済み：${formulaText(drawnP)}`;
+      vertexLabel.textContent = `頂点 (${drawnP}, 0)`;
+      drawGraph(drawnP);
+    }
+
+    function resetGraph() {
+      pInput.value = "0";
+      inputP = drawnP = 0;
+      formula.textContent = formulaText(0);
+      message.className = "message";
+      message.textContent = "p = 0 に戻しました。2つのグラフが重なっています。";
+      drawnFormula.textContent = "描画済み：y = 2x²";
+      vertexLabel.textContent = "頂点 (0, 0)";
+      drawGraph(0);
+      pInput.focus();
+    }
+
+    pInput.addEventListener("input", updateFormulaFromInput);
+    pInput.addEventListener("keydown", event => { if (event.key === "Enter") executeDrawing(); });
+    document.getElementById("drawButton").addEventListener("click", executeDrawing);
+    document.getElementById("resetButton").addEventListener("click", resetGraph);
+    window.addEventListener("resize", resizeCanvas);
+    resizeCanvas();
+  </script>
+</body>
+</html>
