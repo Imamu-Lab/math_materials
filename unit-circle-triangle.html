@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>単位円で見る三角形</title>
+<style>
+:root{--orange:#e97624;--blue:#2563a6;--ink:#253243;--muted:#667085;--line:#d8e0e8;--panel:#f8fafc}
+*{box-sizing:border-box}body{margin:0;font-family:"Yu Gothic UI","Hiragino Kaku Gothic ProN",Meiryo,sans-serif;color:var(--ink);background:#eef2f6}header{height:58px;display:flex;align-items:center;padding:0 22px;background:#fff;border-bottom:1px solid var(--line)}h1{font-size:22px;margin:0}.app{display:grid;grid-template-columns:minmax(520px,2fr) minmax(300px,1fr);height:calc(100vh - 58px)}.canvas{background:#fff;min-height:520px;overflow:hidden}.canvas svg{width:100%;height:100%;touch-action:none;user-select:none}.panel{background:var(--panel);border-left:1px solid var(--line);padding:20px;overflow:auto}.panel h2{font-size:17px;margin:0 0 14px}.control{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:14px;margin-bottom:12px}.switch-row{display:flex;align-items:center;justify-content:space-between;gap:12px;font-weight:700}.switch{position:relative;width:48px;height:26px;flex:0 0 auto}.switch input{opacity:0}.slider{position:absolute;inset:0;background:#cbd5e1;border-radius:99px;cursor:pointer}.slider:before{content:"";position:absolute;width:20px;height:20px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.18s}.switch input:checked+.slider{background:var(--blue)}.switch input:checked+.slider:before{transform:translateX(22px)}.fold-button{width:100%;display:flex;justify-content:space-between;align-items:center;border:0;background:transparent;padding:0;color:var(--ink);font:inherit;font-weight:700;cursor:pointer}.values{margin-top:12px;border-top:1px solid #e5e7eb;padding-top:10px}.value-row{display:grid;grid-template-columns:1fr auto;gap:16px;padding:7px 2px;border-bottom:1px solid #f0f2f5}.value-row:last-child{border-bottom:0}.value-row span:last-child{font-variant-numeric:tabular-nums;font-weight:700}.buttons{display:flex;gap:8px;flex-wrap:wrap}.btn{border:1px solid #cbd5e1;background:#fff;color:var(--ink);border-radius:9px;padding:9px 13px;font-weight:700;cursor:pointer}.btn:hover{background:#f1f5f9}.note{font-size:12px;color:var(--muted);line-height:1.6;margin:10px 2px 0}.hidden{display:none!important}
+svg text{font-family:"Yu Gothic UI",Meiryo,sans-serif;pointer-events:none}.axis{stroke:#87909c;stroke-width:1.4}.unit-circle{fill:none;stroke:#adb6c0;stroke-width:2}.tri-fill{fill:rgba(233,118,36,.10);cursor:grab}.edge{stroke:#34495e;stroke-width:3;stroke-linecap:round}.edge-a{stroke:var(--orange);stroke-width:5}.vertex{stroke:#fff;stroke-width:3;cursor:grab}.vA{fill:var(--orange)}.vBC{fill:#345f86}.angle-a{fill:none;stroke:var(--orange);stroke-width:3}.radius{stroke:var(--blue);stroke-width:2.4}.bisector{stroke:var(--blue);stroke-width:2.4;stroke-dasharray:9 7}.half-angle{fill:none;stroke:var(--blue);stroke-width:3}.helper{stroke:#66717e;stroke-width:2}.right-mark{fill:none;stroke:#273445;stroke-width:2.5}.rot-hit{stroke:transparent;stroke-width:22;cursor:grab}.dragging{cursor:grabbing!important}
+@media(max-width:850px){.app{grid-template-columns:1fr;grid-template-rows:minmax(500px,66vh) auto;height:auto}.panel{border-left:0;border-top:1px solid var(--line)}header{height:54px}.canvas{min-height:500px}}
+</style>
+</head>
+<body>
+<header><h1>単位円で見る三角形</h1></header>
+<main class="app">
+<section class="canvas">
+<svg id="svg" viewBox="0 0 720 720" role="img" aria-label="単位円上の三角形">
+<defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#87909c"/></marker></defs>
+<g id="axes"></g><g id="geometry"></g><g id="annotations"></g><g id="hits"></g>
+</svg>
+</section>
+<aside class="panel">
+<h2>表示・計測</h2>
+<div class="control"><div class="switch-row"><span>角Aの二等分線を表示</span><label class="switch"><input type="checkbox" id="bisectorToggle"><span class="slider"></span></label></div></div>
+<div class="control"><button class="fold-button" id="valuesButton" aria-expanded="false"><span>数値表示</span><span id="foldMark">＋</span></button><div class="values hidden" id="values">
+<div class="value-row"><span>内角 A</span><span id="valA">0.0°</span></div>
+<div class="value-row"><span>中心角 ∠BOC</span><span id="valCentral">0.0°</span></div>
+<div class="value-row"><span>辺 BC</span><span id="valBC">0.00</span></div>
+<div class="value-row"><span>線分 BH</span><span id="valBH">－</span></div>
+<div class="value-row"><span>線分 CH</span><span id="valCH">－</span></div>
+<div class="value-row"><span>sin A</span><span id="valSin">0.000</span></div>
+</div></div>
+<div class="buttons"><button class="btn" id="resetBtn">リセット</button><button class="btn" id="randomBtn">別の三角形</button></div>
+<p class="note">頂点をドラッグすると変形し、辺または三角形の内部をドラッグすると全体が回転します。</p>
+</aside>
+</main>
+<script>
+(()=>{'use strict';
+const NS='http://www.w3.org/2000/svg',W=720,cx=360,cy=360,R=260;
+const initial={A:d2r(195),B:d2r(-5),C:d2r(75)};
+let pts={...initial},snapped=false,drag=null;
+const $=id=>document.getElementById(id),svg=$('svg');
+const g={axes:$('axes'),geo:$('geometry'),ann:$('annotations'),hits:$('hits')};
+function d2r(v){return v*Math.PI/180}function r2d(v){return v*180/Math.PI}function norm(a){a%=2*Math.PI;return a<0?a+2*Math.PI:a}function ccw(a,b){return norm(b-a)}
+function onArc(x,s,e){return ccw(s,x)>1e-7&&ccw(s,x)<ccw(s,e)-1e-7}
+function targetArc(){const{A,B,C}=pts;return !onArc(A,B,C)?{s:B,len:ccw(B,C)}:{s:C,len:ccw(C,B)}}
+function metrics(){const arc=targetArc(),central=arc.len,Aang=central/2,bis=norm(arc.s+central/2);return{arc,central,Aang,bis}}
+function point(a){return{x:cx+R*Math.cos(a),y:cy-R*Math.sin(a)}}
+function elem(tag,attrs={},parent=g.geo){const n=document.createElementNS(NS,tag);Object.entries(attrs).forEach(([k,v])=>n.setAttribute(k,v));parent.appendChild(n);return n}
+function clear(n){n.textContent=''}function line(a,b,cls,parent=g.geo){return elem('line',{x1:a.x,y1:a.y,x2:b.x,y2:b.y,class:cls},parent)}
+function text(x,y,s,parent=g.ann,size=18){const n=elem('text',{x,y,'text-anchor':'middle','dominant-baseline':'middle','font-size':size,'font-weight':'700'},parent);n.textContent=s;return n}
+function arcPath(o,r,start,len){const s={x:o.x+r*Math.cos(start),y:o.y-r*Math.sin(start)},e={x:o.x+r*Math.cos(start+len),y:o.y-r*Math.sin(start+len)};return`M ${s.x} ${s.y} A ${r} ${r} 0 ${len>Math.PI?1:0} 0 ${e.x} ${e.y}`}
+function angleAtA(){const A=point(pts.A),B=point(pts.B),C=point(pts.C),a1=Math.atan2(-(B.y-A.y),B.x-A.x),a2=Math.atan2(-(C.y-A.y),C.x-A.x);let len=ccw(a1,a2);return len>Math.PI?{s:a2,len:2*Math.PI-len}:{s:a1,len}}
+function drawAxes(){clear(g.axes);line({x:75,y:cy},{x:650,y:cy},'axis',g.axes).setAttribute('marker-end','url(#arrow)');line({x:cx,y:645},{x:cx,y:70},'axis',g.axes).setAttribute('marker-end','url(#arrow)');elem('circle',{cx,cy,r:R,class:'unit-circle'},g.axes);text(cx+R,cy+22,'1',g.axes,17);text(cx+19,cy-R,'1',g.axes,17);text(cx-15,cy+18,'O',g.axes,18)}
+function rightMark(H,B){const O={x:cx,y:cy},ux=O.x-H.x,uy=O.y-H.y,ul=Math.hypot(ux,uy)||1,vx=B.x-H.x,vy=B.y-H.y,vl=Math.hypot(vx,vy)||1,s=15,u={x:ux/ul*s,y:uy/ul*s},v={x:vx/vl*s,y:vy/vl*s};elem('path',{d:`M ${H.x+u.x} ${H.y+u.y} L ${H.x+u.x+v.x} ${H.y+u.y+v.y} L ${H.x+v.x} ${H.y+v.y}`,class:'right-mark'},g.ann)}
+function drawHalfAngle(angle){let a=norm(angle);if(a>Math.PI)a-=2*Math.PI;const start=Math.min(0,a),len=Math.abs(a);elem('path',{d:arcPath({x:cx,y:cy},58,start,len),class:'half-angle'},g.geo);const mid=start+len/2;text(cx+82*Math.cos(mid),cy-82*Math.sin(mid),`${r2d(metrics().Aang).toFixed(1)}°`,g.ann,16)}
+function render(){drawAxes();clear(g.geo);clear(g.ann);clear(g.hits);const A=point(pts.A),B=point(pts.B),C=point(pts.C),m=metrics(),show=$('bisectorToggle').checked;
+ elem('polygon',{points:`${A.x},${A.y} ${B.x},${B.y} ${C.x},${C.y}`,class:'tri-fill'},g.geo);line(A,B,'edge');line(A,C,'edge');line(B,C,'edge edge-a');
+ const aa=angleAtA();elem('path',{d:arcPath(A,38,aa.s,aa.len),class:'angle-a'},g.geo);const amid=aa.s+aa.len/2;text(A.x+59*Math.cos(amid),A.y-59*Math.sin(amid),`A=${r2d(m.Aang).toFixed(1)}°`,g.ann,17);
+ const mid={x:(B.x+C.x)/2,y:(B.y+C.y)/2};text(mid.x+24*Math.cos(m.bis+Math.PI),mid.y-24*Math.sin(m.bis+Math.PI),`BC=${(2*Math.sin(m.Aang)).toFixed(2)}`,g.ann,17);
+ if(show){line({x:cx,y:cy},B,'radius');line({x:cx,y:cy},C,'radius');line({x:cx,y:cy},point(m.bis),'bisector');drawHalfAngle(pts.B);drawHalfAngle(pts.C);if(snapped){const H={x:(B.x+C.x)/2,y:(B.y+C.y)/2};line({x:cx,y:cy},H,'helper');text(H.x+(H.x<cx?-16:16),H.y+19,'H',g.ann,17);rightMark(H,B)}}
+ Object.entries({A,B,C}).forEach(([name,P])=>{elem('circle',{cx:P.x,cy:P.y,r:10,class:`vertex ${name==='A'?'vA':'vBC'}`},g.geo);text(P.x+(P.x>cx?20:-20),P.y+(P.y>cy?20:-20),name,g.ann,18)});
+ const hit=elem('polygon',{points:`${A.x},${A.y} ${B.x},${B.y} ${C.x},${C.y}`,fill:'transparent','pointer-events':'all',class:'tri-fill'},g.hits);hit.dataset.action='rotate';[[A,B],[A,C],[B,C]].forEach(pair=>{const h=line(pair[0],pair[1],'rot-hit',g.hits);h.dataset.action='rotate'});Object.entries({A,B,C}).forEach(([name,P])=>{const h=elem('circle',{cx:P.x,cy:P.y,r:25,fill:'transparent'},g.hits);h.dataset.vertex=name;h.style.cursor='grab'});updateValues(m)}
+function updateValues(m){$('valA').textContent=`${r2d(m.Aang).toFixed(1)}°`;$('valCentral').textContent=`${r2d(m.central).toFixed(1)}°`;$('valBC').textContent=(2*Math.sin(m.Aang)).toFixed(2);$('valSin').textContent=Math.sin(m.Aang).toFixed(3);const active=$('bisectorToggle').checked&&snapped;$('valBH').textContent=active?Math.sin(m.Aang).toFixed(3):'－';$('valCH').textContent=active?Math.sin(m.Aang).toFixed(3):'－'}
+function clientAngle(e){const r=svg.getBoundingClientRect(),x=(e.clientX-r.left)/r.width*W,y=(e.clientY-r.top)/r.height*720;return Math.atan2(cy-y,x-cx)}
+function tooClose(name,a){return Object.entries(pts).some(([k,v])=>k!==name&&Math.min(ccw(a,v),ccw(v,a))<d2r(3))}
+function snapRight(name,candidate){const old=pts[name];pts[name]=candidate;let best={a:candidate,err:Math.abs(metrics().Aang-Math.PI/2)};for(let k=-12;k<=12;k++){const a=candidate+d2r(k*.05);pts[name]=a;const err=Math.abs(metrics().Aang-Math.PI/2);if(err<best.err)best={a,err}}pts[name]=old;return best.err<d2r(.5)?best.a:candidate}
+svg.addEventListener('pointerdown',e=>{const t=e.target;if(t.dataset.vertex)drag={type:'vertex',name:t.dataset.vertex};else if(t.dataset.action==='rotate')drag={type:'rotate',last:clientAngle(e),unlock:false};if(drag){svg.setPointerCapture(e.pointerId);svg.classList.add('dragging')}});
+svg.addEventListener('pointermove',e=>{if(!drag)return;const a=clientAngle(e);if(drag.type==='vertex'){const next=snapRight(drag.name,a);if(!tooClose(drag.name,next)){pts[drag.name]=norm(next);snapped=false;render()}}else{let delta=Math.atan2(Math.sin(a-drag.last),Math.cos(a-drag.last));if(snapped&&!drag.unlock){drag.unlock=Math.abs(delta)>d2r(6);if(!drag.unlock)return;snapped=false}Object.keys(pts).forEach(k=>pts[k]=norm(pts[k]+delta));drag.last=a;if($('bisectorToggle').checked){const m=metrics(),d=Math.atan2(Math.sin(m.bis),Math.cos(m.bis));if(Math.abs(d)<d2r(3)){Object.keys(pts).forEach(k=>pts[k]=norm(pts[k]-d));snapped=true;drag.last=a}}render()}});
+function end(){drag=null;svg.classList.remove('dragging')}svg.addEventListener('pointerup',end);svg.addEventListener('pointercancel',end);
+$('bisectorToggle').addEventListener('change',()=>{if(!$('bisectorToggle').checked)snapped=false;render()});
+$('valuesButton').addEventListener('click',()=>{const open=$('values').classList.toggle('hidden')===false;$('valuesButton').setAttribute('aria-expanded',String(open));$('foldMark').textContent=open?'－':'＋'});
+$('resetBtn').addEventListener('click',()=>{pts={...initial};snapped=false;$('bisectorToggle').checked=false;$('values').classList.add('hidden');$('foldMark').textContent='＋';$('valuesButton').setAttribute('aria-expanded','false');render()});
+$('randomBtn').addEventListener('click',()=>{for(let i=0;i<100;i++){const half=d2r(20+Math.random()*60),mid=d2r(20+Math.random()*320);pts={B:norm(mid-half),C:norm(mid+half),A:norm(mid+Math.PI+d2r(25+Math.random()*100))};const m=metrics();if(m.Aang>d2r(20)&&m.Aang<d2r(80)&&Math.abs(Math.atan2(Math.sin(m.bis),Math.cos(m.bis)))>d2r(12))break}snapped=false;$('bisectorToggle').checked=false;render()});
+render();})();
+</script>
+</body></html>
