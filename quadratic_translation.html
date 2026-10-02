@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>2次関数の平行移動</title>
+  <link rel="stylesheet" href="./lib/katex/katex.min.css">
+  <script defer src="./lib/katex/katex.min.js"></script>
   <style>
     * { box-sizing: border-box; }
     body {
@@ -34,6 +36,10 @@
       transition: transform .15s, background-color .15s;
     }
     .formula.changed { transform: scale(1.015); background: #dbeafe; }
+    .formula .katex-display { margin: 0; }
+    .formula .katex { font-size: 1em; }
+    .math-inline { display: inline-block; vertical-align: middle; }
+    .legend-item .katex { font-size: 1.05em; }
     .controls {
       display: flex;
       flex-wrap: wrap;
@@ -112,7 +118,7 @@
     <p class="subtitle">pの値を変えて、式とグラフの変化を調べよう</p>
 
     <section class="card">
-      <div id="formula" class="formula">y = 2x²</div>
+      <div id="formula" class="formula" aria-label="y = 2xの2乗">y = 2x²</div>
 
       <div class="controls">
         <div class="input-group">
@@ -133,9 +139,9 @@
       </div>
 
       <div class="legend">
-        <div class="legend-item"><span class="line original"></span><span>元のグラフ y = 2x²</span></div>
-        <div class="legend-item"><span class="line moved"></span><span id="drawnFormula">描画済み：y = 2x²</span></div>
-        <div class="legend-item"><span class="point"></span><span id="vertexLabel">頂点 (0, 0)</span></div>
+        <div class="legend-item"><span class="line original"></span><span>元のグラフ <span id="originalFormula" class="math-inline">y = 2x²</span></span></div>
+        <div class="legend-item"><span class="line moved"></span><span>描画済み：<span id="drawnFormula" class="math-inline">y = 2x²</span></span></div>
+        <div class="legend-item"><span class="point"></span><span>頂点 <span id="vertexLabel" class="math-inline">(0, 0)</span></span></div>
       </div>
 
       <aside class="observation">
@@ -155,6 +161,7 @@
     const ctx = canvas.getContext("2d");
     const pInput = document.getElementById("pInput");
     const formula = document.getElementById("formula");
+    const originalFormula = document.getElementById("originalFormula");
     const message = document.getElementById("message");
     const drawnFormula = document.getElementById("drawnFormula");
     const vertexLabel = document.getElementById("vertexLabel");
@@ -165,6 +172,23 @@
     function formulaText(p) {
       if (p === 0) return "y = 2x²";
       return p > 0 ? `y = 2(x − ${p})²` : `y = 2(x + ${Math.abs(p)})²`;
+    }
+    function formulaTex(p) {
+      if (p === 0) return "y = 2x^2";
+      return p > 0 ? `y = 2\\left(x-${p}\\right)^2` : `y = 2\\left(x+${Math.abs(p)}\\right)^2`;
+    }
+    function renderMath(element, tex, displayMode = false) {
+      if (window.katex) {
+        window.katex.render(tex, element, { throwOnError: false, displayMode });
+      } else {
+        element.textContent = tex.replace(/\\left|\\right/g, "").replace(/\^2/g, "²");
+      }
+    }
+    function renderStaticMath() {
+      renderMath(originalFormula, "y = 2x^2");
+      renderMath(formula, formulaTex(inputP), true);
+      renderMath(drawnFormula, formulaTex(drawnP));
+      renderMath(vertexLabel, `(${drawnP},\\,0)`);
     }
 
     function validInteger(value) {
@@ -182,7 +206,7 @@
         return;
       }
       inputP = Number(value);
-      formula.textContent = formulaText(inputP);
+      renderMath(formula, formulaTex(inputP), true);
       formula.classList.add("changed");
       setTimeout(() => formula.classList.remove("changed"), 160);
       if (inputP === drawnP) {
@@ -284,19 +308,19 @@
       drawnP = inputP;
       message.className = "message";
       message.textContent = movementText(drawnP);
-      drawnFormula.textContent = `描画済み：${formulaText(drawnP)}`;
-      vertexLabel.textContent = `頂点 (${drawnP}, 0)`;
+      renderMath(drawnFormula, formulaTex(drawnP));
+      renderMath(vertexLabel, `(${drawnP},\,0)`);
       drawGraph(drawnP);
     }
 
     function resetGraph() {
       pInput.value = "0";
       inputP = drawnP = 0;
-      formula.textContent = formulaText(0);
+      renderMath(formula, formulaTex(0), true);
       message.className = "message";
       message.textContent = "p = 0 に戻しました。2つのグラフが重なっています。";
-      drawnFormula.textContent = "描画済み：y = 2x²";
-      vertexLabel.textContent = "頂点 (0, 0)";
+      renderMath(drawnFormula, formulaTex(0));
+      renderMath(vertexLabel, "(0,\,0)");
       drawGraph(0);
       pInput.focus();
     }
@@ -306,7 +330,10 @@
     document.getElementById("drawButton").addEventListener("click", executeDrawing);
     document.getElementById("resetButton").addEventListener("click", resetGraph);
     window.addEventListener("resize", resizeCanvas);
-    resizeCanvas();
+    window.addEventListener("DOMContentLoaded", () => {
+      renderStaticMath();
+      resizeCanvas();
+    });
   </script>
 </body>
 </html>

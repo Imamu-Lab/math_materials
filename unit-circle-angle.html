@@ -86,12 +86,17 @@
 
     <div class="circle-wrapper">
       <svg id="unitCircleSvg" viewBox="0 0 600 600" role="img" aria-label="点をドラッグして角度を変更できる単位円">
+        <defs>
+          <marker id="angleArrow" markerWidth="5" markerHeight="5" refX="4.2" refY="2.5" orient="auto" markerUnits="strokeWidth">
+            <path d="M 0 0 L 5 2.5 L 0 5 Z" fill="#f59e0b" />
+          </marker>
+        </defs>
         <!-- 背景と目盛り -->
         <circle class="unit-circle" cx="300" cy="300" r="220" />
         <g id="scaleMarks"></g>
 
         <!-- 円弧。負の角は時計回り、360度以上は渦巻き状 -->
-        <path id="angleArc" class="angle-arc" />
+        <path id="angleArc" class="angle-arc" marker-end="url(#angleArrow)" />
 
         <!-- 座標軸を単位円より手前に描画 -->
         <line class="axis" x1="42" y1="300" x2="558" y2="300" />
@@ -246,6 +251,11 @@
       pointHitArea.setAttribute("cx", pointX);
       pointHitArea.setAttribute("cy", pointY);
       angleArc.setAttribute("d", createAnglePath(displayedAngle));
+      if (displayedAngle === 0) {
+        angleArc.removeAttribute("marker-end");
+      } else {
+        angleArc.setAttribute("marker-end", "url(#angleArrow)");
+      }
 
       const quadrant = getQuadrantText(displayedAngle);
       quadrantDisplay.textContent = quadrant;
