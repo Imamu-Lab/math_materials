@@ -201,6 +201,124 @@
         }
 
 
+
+        /* 更新履歴 */
+        .update-history {
+            width: min(920px, 100%);
+            margin: 28px auto 0;
+            padding: 18px 20px;
+            text-align: left;
+            background: rgba(8, 25, 43, 0.72);
+            border: 1px solid rgba(0, 212, 255, 0.22);
+            border-radius: 14px;
+            box-shadow:
+                0 0 12px rgba(0, 212, 255, 0.12),
+                inset 0 0 20px rgba(0, 212, 255, 0.025);
+            backdrop-filter: blur(10px);
+        }
+
+        .update-history-heading {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .update-history-title {
+            flex: 0 0 auto;
+            color: var(--accent);
+            font-size: 0.98rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-shadow: 0 0 10px rgba(0, 212, 255, 0.7);
+        }
+
+        .update-history-line {
+            flex: 1 1 auto;
+            height: 1px;
+            background: linear-gradient(90deg, rgba(0, 212, 255, 0.82), transparent);
+            box-shadow: 0 0 7px rgba(0, 212, 255, 0.3);
+        }
+
+        .update-list {
+            display: grid;
+            gap: 10px;
+            list-style: none;
+        }
+
+        .update-item {
+            display: grid;
+            grid-template-columns: 7.2rem minmax(0, 1fr);
+            gap: 12px;
+            padding: 10px 12px;
+            background: rgba(13, 32, 57, 0.52);
+            border-left: 3px solid rgba(0, 212, 255, 0.72);
+            border-radius: 6px;
+        }
+
+        .update-date {
+            color: var(--accent);
+            font-family: Consolas, "Courier New", monospace;
+            font-size: 0.86rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .update-text strong {
+            display: block;
+            margin-bottom: 2px;
+            color: #f2f8ff;
+            font-size: 0.94rem;
+        }
+
+        .update-text p {
+            margin: 0;
+            color: var(--subtext);
+            font-size: 0.87rem;
+            line-height: 1.6;
+        }
+
+        .update-archive {
+            margin-top: 12px;
+            border-top: 1px solid rgba(0, 212, 255, 0.14);
+            padding-top: 10px;
+        }
+
+        .update-archive summary {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            color: var(--accent);
+            font-size: 0.88rem;
+            font-weight: 600;
+            cursor: pointer;
+            list-style: none;
+        }
+
+        .update-archive summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .update-archive summary::before {
+            content: "+";
+            width: 1.25rem;
+            height: 1.25rem;
+            display: grid;
+            place-items: center;
+            border: 1px solid rgba(0, 212, 255, 0.45);
+            border-radius: 50%;
+            transition: transform 0.2s ease;
+        }
+
+        .update-archive[open] summary::before {
+            content: "−";
+            transform: rotate(180deg);
+        }
+
+        .update-archive .update-list {
+            margin-top: 10px;
+        }
+
         .category-section {
             margin-bottom: 48px;
         }
@@ -266,6 +384,17 @@
                 padding-top: 45px;
             }
 
+
+
+            .update-history {
+                padding: 15px 14px;
+            }
+
+            .update-item {
+                grid-template-columns: 1fr;
+                gap: 3px;
+            }
+
             .category-heading {
                 gap: 10px;
             }
@@ -312,6 +441,22 @@
             数学教育のための教材ポータル<br>
             授業・演習・研修で活用できるWeb教材を提供
         </p>
+
+
+        <section class="update-history" aria-labelledby="updateHistoryTitle">
+            <div class="update-history-heading">
+                <h2 class="update-history-title" id="updateHistoryTitle">UPDATE HISTORY</h2>
+                <div class="update-history-line" aria-hidden="true"></div>
+            </div>
+
+            <ul class="update-list" id="recentUpdateList" aria-label="最近の更新履歴"></ul>
+
+            <details class="update-archive" id="updateArchive" hidden>
+                <summary id="updateArchiveSummary">過去の更新履歴を表示</summary>
+                <ul class="update-list" id="olderUpdateList" aria-label="過去の更新履歴"></ul>
+            </details>
+        </section>
+
     </header>
 
     <main>
@@ -525,5 +670,106 @@
         <div>Mathematics Learning Hub</div>
         <div class="footer-lab">Created by Imamu-Lab</div>
     </footer>
+
+
+    <script>
+    (() => {
+        "use strict";
+
+        /*
+         * 更新履歴はこの配列へ追加します。
+         * 同じ materialId が複数ある場合は、最も新しい日付の履歴だけを表示します。
+         * date は YYYY-MM-DD 形式で入力してください。
+         */
+        const updateHistory = [
+            {
+                date: "2026-10-02",
+                materialId: "circular-permutation-explorer",
+                title: "「円順列を探索しよう」を更新しました。",
+                description: "一部の文字を選んで並べる円順列や、数珠順列に対応しました。"
+            }
+        ];
+
+        const recentList = document.getElementById("recentUpdateList");
+        const olderList = document.getElementById("olderUpdateList");
+        const archive = document.getElementById("updateArchive");
+        const archiveSummary = document.getElementById("updateArchiveSummary");
+
+        if (!recentList || !olderList || !archive || !archiveSummary) return;
+
+        const toLocalDate = (dateText) => {
+            const [year, month, day] = dateText.split("-").map(Number);
+            return new Date(year, month - 1, day);
+        };
+
+        const formatDate = (dateText) => {
+            const [year, month, day] = dateText.split("-").map(Number);
+            return `${year}/${month}/${day}`;
+        };
+
+        const latestByMaterial = new Map();
+
+        updateHistory.forEach((item) => {
+            const existing = latestByMaterial.get(item.materialId);
+            if (!existing || toLocalDate(item.date) > toLocalDate(existing.date)) {
+                latestByMaterial.set(item.materialId, item);
+            }
+        });
+
+        const uniqueUpdates = [...latestByMaterial.values()].sort(
+            (a, b) => toLocalDate(b.date) - toLocalDate(a.date)
+        );
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const oneMonthAgo = new Date(today);
+        oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+
+        const recentCount = uniqueUpdates.filter(
+            (item) => toLocalDate(item.date) >= oneMonthAgo
+        ).length;
+
+        const visibleCount = Math.min(
+            uniqueUpdates.length,
+            Math.max(3, recentCount)
+        );
+
+        const visibleUpdates = uniqueUpdates.slice(0, visibleCount);
+        const olderUpdates = uniqueUpdates.slice(visibleCount);
+
+        const createItem = (item) => {
+            const listItem = document.createElement("li");
+            listItem.className = "update-item";
+
+            const date = document.createElement("time");
+            date.className = "update-date";
+            date.dateTime = item.date;
+            date.textContent = formatDate(item.date);
+
+            const text = document.createElement("div");
+            text.className = "update-text";
+
+            const title = document.createElement("strong");
+            title.textContent = item.title;
+
+            const description = document.createElement("p");
+            description.textContent = item.description;
+
+            text.append(title, description);
+            listItem.append(date, text);
+            return listItem;
+        };
+
+        visibleUpdates.forEach((item) => recentList.append(createItem(item)));
+        olderUpdates.forEach((item) => olderList.append(createItem(item)));
+
+        if (olderUpdates.length > 0) {
+            archive.hidden = false;
+            archiveSummary.textContent = `過去の更新履歴を表示（${olderUpdates.length}件）`;
+        }
+    })();
+    </script>
+
 </body>
 </html>
