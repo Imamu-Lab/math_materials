@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="2次関数 y=2x^2+q のグラフを操作し、y軸方向への平行移動を考察する教材です。">
+  <title>2次関数のy軸方向への平行移動</title>
+
+  <link rel="stylesheet" href="./lib/katex/katex.min.css">
+  <script defer src="./lib/katex/katex.min.js"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 24px;
+      background: #f1f5f9;
+      color: #1e293b;
+      font-family: "Yu Gothic", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      margin: 0;
+      text-align: center;
+      color: #172554;
+      font-size: 34px;
+    }
+
+    .subtitle {
+      margin: 8px 0 22px;
+      text-align: center;
+      color: #475569;
+    }
+
+    .card {
+      padding: 28px;
+      background: #ffffff;
+      border-radius: 18px;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+    }
+
+    .formula {
+      margin-bottom: 22px;
+      padding: 16px;
+      border: 2px solid #93c5fd;
+      border-radius: 12px;
+      background: #eff6ff;
+      color: #1d4ed8;
+      text-align: center;
+      font: bold 32px Georgia, "Times New Roman", serif;
+      transition: transform 0.15s, background-color 0.15s;
+    }
+
+    .formula.changed {
+      transform: scale(1.015);
+      background: #dbeafe;
+    }
+
+    .formula .katex-display {
+      margin: 0;
+    }
+
+    .formula .katex {
+      font-size: 1em;
+    }
+
+    .math-inline {
+      display: inline-block;
+      vertical-align: middle;
+    }
+
+    .legend-item .katex {
+      font-size: 1.05em;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: flex-end;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .input-group label {
+      font-weight: 700;
+    }
+
+    .input-group small {
+      color: #64748b;
+    }
+
+    input[type="number"] {
+      width: 160px;
+      min-height: 50px;
+      padding: 10px;
+      border: 2px solid #94a3b8;
+      border-radius: 9px;
+      font-size: 21px;
+      text-align: center;
+    }
+
+    input[type="number"]:focus {
+      border-color: #2563eb;
+      outline: 4px solid rgba(37, 99, 235, 0.13);
+    }
+
+    button {
+      min-height: 50px;
+      padding: 12px 24px;
+      border: 0;
+      border-radius: 11px;
+      font-size: 17px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    .draw-button {
+      background: #2563eb;
+      color: #ffffff;
+    }
+
+    .draw-button:hover {
+      background: #1d4ed8;
+    }
+
+    .reset-button {
+      background: #e2e8f0;
+      color: #1e293b;
+    }
+
+    .reset-button:hover {
+      background: #cbd5e1;
+    }
+
+    .message {
+      min-height: 58px;
+      margin-bottom: 18px;
+      padding: 14px;
+      border-left: 5px solid #2563eb;
+      border-radius: 8px;
+      background: #f8fafc;
+      font-size: 17px;
+      line-height: 1.6;
+    }
+
+    .message.pending {
+      border-left-color: #f59e0b;
+      background: #fffbeb;
+      color: #92400e;
+    }
+
+    .message.error {
+      border-left-color: #dc2626;
+      background: #fff1f2;
+      color: #991b1b;
+    }
+
+    .graph-wrapper {
+      overflow: hidden;
+      border: 1px solid #cbd5e1;
+      border-radius: 12px;
+      background: #ffffff;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 560px;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 18px 26px;
+      margin-top: 16px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .line {
+      display: inline-block;
+      width: 38px;
+      height: 4px;
+      border-radius: 3px;
+    }
+
+    .original {
+      height: 0;
+      border-top: 4px dashed #64748b;
+    }
+
+    .moved {
+      background: #2563eb;
+    }
+
+    .vertex-mark {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+    }
+
+    .original-vertex {
+      background: #64748b;
+    }
+
+    .moved-vertex {
+      background: #dc2626;
+    }
+
+    .observation {
+      margin-top: 20px;
+      padding: 16px 20px;
+      border: 1px solid #fbbf24;
+      border-radius: 12px;
+      background: #fffbeb;
+    }
+
+    .observation h2 {
+      margin: 0 0 8px;
+      color: #92400e;
+      font-size: 20px;
+    }
+
+    .observation ul {
+      margin: 0;
+      padding-left: 24px;
+      line-height: 1.8;
+    }
+
+    .site-footer {
+      margin-top: 22px;
+      color: #64748b;
+      text-align: center;
+      font-size: 0.78rem;
+    }
+
+    @media (max-width: 620px) {
+      body {
+        padding: 12px;
+      }
+
+      h1 {
+        font-size: 26px;
+      }
+
+      .card {
+        padding: 15px;
+      }
+
+      .formula {
+        font-size: 27px;
+      }
+
+      .controls {
+        align-items: stretch;
+      }
+
+      .input-group,
+      input[type="number"],
+      button {
+        width: 100%;
+      }
+
+      canvas {
+        height: 480px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        scroll-behavior: auto !important;
+        transition: none !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="container">
+    <h1>2次関数のy軸方向への平行移動</h1>
+    <p class="subtitle">qの値を変えて、式とグラフの変化を調べよう</p>
+
+    <section class="card">
+      <div id="formula" class="formula" aria-label="y = 2xの2乗">y = 2x²</div>
+
+      <div class="controls">
+        <div class="input-group">
+          <label for="qInput">qの値</label>
+          <input id="qInput" type="number" value="0" min="-5" max="5" step="1" inputmode="numeric">
+          <small>整数で入力：−5 から 5</small>
+        </div>
+
+        <button id="drawButton" class="draw-button" type="button">▶ グラフを描画</button>
+        <button id="resetButton" class="reset-button" type="button">↻ q = 0 に戻す</button>
+        <button id="labelToggleButton" class="reset-button" type="button" aria-pressed="false">移動量を表示する</button>
+      </div>
+
+      <div id="message" class="message" role="status" aria-live="polite">
+        qの値を変更し、グラフが上下のどちらへ、いくつ移動するかを予想してから、「グラフを描画」を押してください。
+      </div>
+
+      <div class="graph-wrapper">
+        <canvas id="graphCanvas" aria-label="2次関数のy軸方向への平行移動を表すグラフ"></canvas>
+      </div>
+
+      <div class="legend" aria-label="グラフの凡例">
+        <div class="legend-item">
+          <span class="line original" aria-hidden="true"></span>
+          <span>元のグラフ <span id="originalFormula" class="math-inline">y = 2x²</span></span>
+        </div>
+
+        <div class="legend-item">
+          <span class="line moved" aria-hidden="true"></span>
+          <span>描画済み：<span id="drawnFormula" class="math-inline">y = 2x²</span></span>
+        </div>
+
+        <div class="legend-item">
+          <span class="vertex-mark original-vertex" aria-hidden="true"></span>
+          <span>元の頂点 <span id="originalVertexLabel" class="math-inline">(0, 0)</span></span>
+        </div>
+
+        <div class="legend-item">
+          <span class="vertex-mark moved-vertex" aria-hidden="true"></span>
+          <span>移動後の頂点 <span id="movedVertexLabel" class="math-inline">(0, 0)</span></span>
+        </div>
+      </div>
+
+      <aside class="observation">
+        <h2>観察してみよう</h2>
+        <ul>
+          <li>qが正のとき、グラフはどちらへ移動するだろう。</li>
+          <li>qが負のとき、グラフはどちらへ移動するだろう。</li>
+          <li>式の定数項と、頂点のy座標および移動方向との関係を考えよう。</li>
+        </ul>
+      </aside>
+    </section>
+
+    <footer class="site-footer">Produced by Imamu-Lab</footer>
+  </main>
+
+  <script>
+    "use strict";
+
+    const canvas = document.getElementById("graphCanvas");
+    const ctx = canvas.getContext("2d");
+    const qInput = document.getElementById("qInput");
+    const formula = document.getElementById("formula");
+    const originalFormula = document.getElementById("originalFormula");
+    const message = document.getElementById("message");
+    const drawnFormula = document.getElementById("drawnFormula");
+    const originalVertexLabel = document.getElementById("originalVertexLabel");
+    const movedVertexLabel = document.getElementById("movedVertexLabel");
+    const labelToggleButton = document.getElementById("labelToggleButton");
+
+    const range = {
+      xMin: -10,
+      xMax: 10,
+      yMin: -6,
+      yMax: 20
+    };
+
+    let inputQ = 0;
+    let drawnQ = 0;
+    let showMovementLabels = false;
+
+    function formulaText(q) {
+      if (q === 0) return "y = 2x²";
+      return q > 0 ? `y = 2x² + ${q}` : `y = 2x² − ${Math.abs(q)}`;
+    }
+
+    function formulaTex(q) {
+      if (q === 0) return "y = 2x^2";
+      return q > 0 ? `y = 2x^2+${q}` : `y = 2x^2-${Math.abs(q)}`;
+    }
+
+    function renderMath(element, tex, displayMode = false) {
+      if (window.katex) {
+        window.katex.render(tex, element, {
+          throwOnError: false,
+          displayMode
+        });
+      } else {
+        element.textContent = tex.replace(/\^2/g, "²");
+      }
+    }
+
+    function renderStaticMath() {
+      renderMath(originalFormula, "y = 2x^2");
+      renderMath(formula, formulaTex(inputQ), true);
+      renderMath(drawnFormula, formulaTex(drawnQ));
+      renderMath(originalVertexLabel, "(0,\\,0)");
+      renderMath(movedVertexLabel, `(0,\\,${drawnQ})`);
+    }
+
+    function validInteger(value) {
+      const q = Number(value);
+      return value !== "" && Number.isInteger(q) && q >= -5 && q <= 5;
+    }
+
+    function updateFormulaFromInput() {
+      const value = qInput.value.trim();
+      message.className = "message";
+
+      if (!validInteger(value)) {
+        formula.textContent = "qには−5から5までの整数を入力してください";
+        message.textContent = "入力値を確認してください。グラフは変更されていません。";
+        message.classList.add("error");
+        return;
+      }
+
+      inputQ = Number(value);
+      renderMath(formula, formulaTex(inputQ), true);
+      formula.setAttribute("aria-label", formulaText(inputQ));
+      formula.classList.add("changed");
+      setTimeout(() => formula.classList.remove("changed"), 160);
+
+      if (inputQ === drawnQ) {
+        message.textContent = "現在表示中のグラフと式が一致しています。qの値を変えて、次の移動を予想してみましょう。";
+      } else {
+        message.textContent = "式が変わりました。グラフが上下のどちらへ、いくつ移動するかを予想してから、「グラフを描画」を押してください。";
+        message.classList.add("pending");
+      }
+    }
+
+    function movementText(q) {
+      if (q === 0) {
+        return "q = 0 なので、移動後のグラフは元のグラフと重なります。";
+      }
+
+      return q > 0
+        ? `予想を確かめましょう。元のグラフを上に ${q} だけ平行移動したグラフです。`
+        : `予想を確かめましょう。元のグラフを下に ${Math.abs(q)} だけ平行移動したグラフです。`;
+    }
+
+    function movementLabel(q) {
+      if (q === 0) return "移動なし";
+      return q > 0 ? `上に${q}` : `下に${Math.abs(q)}`;
+    }
+
+    function resizeCanvas() {
+      const rect = canvas.getBoundingClientRect();
+      const ratio = window.devicePixelRatio || 1;
+      canvas.width = Math.round(rect.width * ratio);
+      canvas.height = Math.round(rect.height * ratio);
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      drawGraph(drawnQ);
+    }
+
+    function drawArrow(x, startY, endY, q) {
+      if (q === 0) return;
+
+      const direction = endY < startY ? -1 : 1;
+      const headSize = 9;
+
+      ctx.save();
+      ctx.strokeStyle = "#d97706";
+      ctx.fillStyle = "#b45309";
+      ctx.lineWidth = 3;
+
+      ctx.beginPath();
+      ctx.moveTo(x, startY);
+      ctx.lineTo(x, endY);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(x, endY);
+      ctx.lineTo(x - headSize, endY - direction * headSize);
+      ctx.lineTo(x + headSize, endY - direction * headSize);
+      ctx.closePath();
+      ctx.fill();
+
+      if (showMovementLabels) {
+        const labelX = x + 13;
+        const labelY = (startY + endY) / 2;
+        const label = movementLabel(q);
+
+        ctx.font = "bold 15px sans-serif";
+        ctx.textAlign = "left";
+        ctx.textBaseline = "middle";
+
+        const textWidth = ctx.measureText(label).width;
+        ctx.fillStyle = "rgba(255, 251, 235, 0.94)";
+        ctx.fillRect(labelX - 4, labelY - 13, textWidth + 8, 26);
+        ctx.strokeStyle = "#f59e0b";
+        ctx.lineWidth = 1;
+        ctx.strokeRect(labelX - 4, labelY - 13, textWidth + 8, 26);
+
+        ctx.fillStyle = "#92400e";
+        ctx.fillText(label, labelX, labelY);
+      }
+      ctx.restore();
+    }
+
+    function drawPoint(x, y, outerColor, innerColor, radius = 6) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(x, y, radius + 2, 0, Math.PI * 2);
+      ctx.fillStyle = outerColor;
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(x, y, radius, 0, Math.PI * 2);
+      ctx.fillStyle = innerColor;
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawGraph(q) {
+      const width = canvas.getBoundingClientRect().width;
+      const height = canvas.getBoundingClientRect().height;
+      const toX = (x) => ((x - range.xMin) / (range.xMax - range.xMin)) * width;
+      const toY = (y) => height - ((y - range.yMin) / (range.yMax - range.yMin)) * height;
+
+      ctx.clearRect(0, 0, width, height);
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, width, height);
+
+      ctx.save();
+      ctx.strokeStyle = "#e2e8f0";
+      ctx.lineWidth = 1;
+
+      for (let x = range.xMin; x <= range.xMax; x += 1) {
+        ctx.beginPath();
+        ctx.moveTo(toX(x), 0);
+        ctx.lineTo(toX(x), height);
+        ctx.stroke();
+      }
+
+      for (let y = range.yMin; y <= range.yMax; y += 1) {
+        ctx.beginPath();
+        ctx.moveTo(0, toY(y));
+        ctx.lineTo(width, toY(y));
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      const ox = toX(0);
+      const oy = toY(0);
+
+      ctx.save();
+      ctx.strokeStyle = "#334155";
+      ctx.fillStyle = "#334155";
+      ctx.lineWidth = 2;
+      ctx.font = "13px sans-serif";
+
+      ctx.beginPath();
+      ctx.moveTo(0, oy);
+      ctx.lineTo(width, oy);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(ox, 0);
+      ctx.lineTo(ox, height);
+      ctx.stroke();
+
+      for (let x = range.xMin; x <= range.xMax; x += 1) {
+        ctx.beginPath();
+        ctx.moveTo(toX(x), oy - 4);
+        ctx.lineTo(toX(x), oy + 4);
+        ctx.stroke();
+
+        if (x !== 0 && x % 2 === 0) {
+          ctx.textAlign = "center";
+          ctx.textBaseline = "top";
+          ctx.fillText(String(x), toX(x), oy + 7);
+        }
+      }
+
+      for (let y = range.yMin; y <= range.yMax; y += 1) {
+        ctx.beginPath();
+        ctx.moveTo(ox - 4, toY(y));
+        ctx.lineTo(ox + 4, toY(y));
+        ctx.stroke();
+
+        if (y !== 0 && y % 2 === 0) {
+          ctx.textAlign = "right";
+          ctx.textBaseline = "middle";
+          ctx.fillText(String(y), ox - 7, toY(y));
+        }
+      }
+
+      ctx.textAlign = "right";
+      ctx.textBaseline = "top";
+      ctx.fillText("0", ox - 6, oy + 6);
+
+      ctx.font = "bold 16px sans-serif";
+      ctx.textAlign = "right";
+      ctx.textBaseline = "bottom";
+      ctx.fillText("x", width - 8, oy - 8);
+      ctx.textAlign = "left";
+      ctx.textBaseline = "top";
+      ctx.fillText("y", ox + 8, 8);
+      ctx.restore();
+
+      function parabola(rule, color, lineWidth, dash = []) {
+        ctx.save();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = lineWidth;
+        ctx.setLineDash(dash);
+        ctx.lineJoin = "round";
+        ctx.beginPath();
+
+        let started = false;
+        for (let x = range.xMin; x <= range.xMax; x += 0.02) {
+          const y = rule(x);
+          if (y < range.yMin - 2 || y > range.yMax + 2) {
+            started = false;
+            continue;
+          }
+
+          if (!started) {
+            ctx.moveTo(toX(x), toY(y));
+            started = true;
+          } else {
+            ctx.lineTo(toX(x), toY(y));
+          }
+        }
+
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      parabola((x) => 2 * x * x, "#64748b", 3, [8, 6]);
+      parabola((x) => 2 * x * x + q, "#2563eb", 4);
+
+      const originalVertexX = toX(0);
+      const originalVertexY = toY(0);
+      const movedVertexX = toX(0);
+      const movedVertexY = toY(q);
+
+      drawPoint(originalVertexX, originalVertexY, "#ffffff", "#64748b", 5);
+
+      if (q !== 0) {
+        drawPoint(movedVertexX, movedVertexY, "#ffffff", "#dc2626", 6);
+        drawArrow(ox + 34, originalVertexY, movedVertexY, q);
+      } else {
+        drawPoint(movedVertexX, movedVertexY, "#ffffff", "#dc2626", 6);
+      }
+
+      if (q === 0) {
+        ctx.save();
+        ctx.font = "bold 15px sans-serif";
+        ctx.fillStyle = "#92400e";
+        ctx.textAlign = "left";
+        ctx.textBaseline = "middle";
+        ctx.fillText("移動なし", ox + 34, oy - 25);
+        ctx.restore();
+      }
+    }
+
+    function executeDrawing() {
+      const value = qInput.value.trim();
+
+      if (!validInteger(value)) {
+        message.className = "message error";
+        message.textContent = "qには−5から5までの整数を入力してください。";
+        qInput.focus();
+        return;
+      }
+
+      inputQ = Number(value);
+      drawnQ = inputQ;
+      message.className = "message";
+      message.textContent = movementText(drawnQ);
+
+      renderMath(drawnFormula, formulaTex(drawnQ));
+      renderMath(movedVertexLabel, `(0,\\,${drawnQ})`);
+      drawGraph(drawnQ);
+    }
+
+    function resetGraph() {
+      qInput.value = "0";
+      inputQ = 0;
+      drawnQ = 0;
+
+      renderMath(formula, formulaTex(0), true);
+      formula.setAttribute("aria-label", formulaText(0));
+      renderMath(drawnFormula, formulaTex(0));
+      renderMath(movedVertexLabel, "(0,\\,0)");
+
+      message.className = "message";
+      message.textContent = "q = 0 に戻しました。2つのグラフが重なっており、移動はありません。qの値を変えて次の移動を予想してみましょう。";
+
+      drawGraph(0);
+      qInput.focus();
+    }
+
+    qInput.addEventListener("input", updateFormulaFromInput);
+    qInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") executeDrawing();
+    });
+
+    document.getElementById("drawButton").addEventListener("click", executeDrawing);
+    document.getElementById("resetButton").addEventListener("click", resetGraph);
+    labelToggleButton.addEventListener("click", () => {
+      showMovementLabels = !showMovementLabels;
+      labelToggleButton.textContent = showMovementLabels
+        ? "移動量の表示を隠す"
+        : "移動量を表示する";
+      labelToggleButton.setAttribute("aria-pressed", String(showMovementLabels));
+      drawGraph(drawnQ);
+    });
+    window.addEventListener("resize", resizeCanvas);
+
+    window.addEventListener("DOMContentLoaded", () => {
+      renderStaticMath();
+      resizeCanvas();
+    });
+  </script>
+</body>
+</html>

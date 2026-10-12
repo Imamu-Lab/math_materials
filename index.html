@@ -201,6 +201,124 @@
         }
 
 
+
+        /* 更新履歴 */
+        .update-history {
+            width: min(920px, 100%);
+            margin: 28px auto 0;
+            padding: 18px 20px;
+            text-align: left;
+            background: rgba(8, 25, 43, 0.72);
+            border: 1px solid rgba(0, 212, 255, 0.22);
+            border-radius: 14px;
+            box-shadow:
+                0 0 12px rgba(0, 212, 255, 0.12),
+                inset 0 0 20px rgba(0, 212, 255, 0.025);
+            backdrop-filter: blur(10px);
+        }
+
+        .update-history-heading {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .update-history-title {
+            flex: 0 0 auto;
+            color: var(--accent);
+            font-size: 0.98rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-shadow: 0 0 10px rgba(0, 212, 255, 0.7);
+        }
+
+        .update-history-line {
+            flex: 1 1 auto;
+            height: 1px;
+            background: linear-gradient(90deg, rgba(0, 212, 255, 0.82), transparent);
+            box-shadow: 0 0 7px rgba(0, 212, 255, 0.3);
+        }
+
+        .update-list {
+            display: grid;
+            gap: 10px;
+            list-style: none;
+        }
+
+        .update-item {
+            display: grid;
+            grid-template-columns: 7.2rem minmax(0, 1fr);
+            gap: 12px;
+            padding: 10px 12px;
+            background: rgba(13, 32, 57, 0.52);
+            border-left: 3px solid rgba(0, 212, 255, 0.72);
+            border-radius: 6px;
+        }
+
+        .update-date {
+            color: var(--accent);
+            font-family: Consolas, "Courier New", monospace;
+            font-size: 0.86rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .update-text strong {
+            display: block;
+            margin-bottom: 2px;
+            color: #f2f8ff;
+            font-size: 0.94rem;
+        }
+
+        .update-text p {
+            margin: 0;
+            color: var(--subtext);
+            font-size: 0.87rem;
+            line-height: 1.6;
+        }
+
+        .update-archive {
+            margin-top: 12px;
+            border-top: 1px solid rgba(0, 212, 255, 0.14);
+            padding-top: 10px;
+        }
+
+        .update-archive summary {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            color: var(--accent);
+            font-size: 0.88rem;
+            font-weight: 600;
+            cursor: pointer;
+            list-style: none;
+        }
+
+        .update-archive summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .update-archive summary::before {
+            content: "+";
+            width: 1.25rem;
+            height: 1.25rem;
+            display: grid;
+            place-items: center;
+            border: 1px solid rgba(0, 212, 255, 0.45);
+            border-radius: 50%;
+            transition: transform 0.2s ease;
+        }
+
+        .update-archive[open] summary::before {
+            content: "−";
+            transform: rotate(180deg);
+        }
+
+        .update-archive .update-list {
+            margin-top: 10px;
+        }
+
         .category-section {
             margin-bottom: 48px;
         }
@@ -266,6 +384,17 @@
                 padding-top: 45px;
             }
 
+
+
+            .update-history {
+                padding: 15px 14px;
+            }
+
+            .update-item {
+                grid-template-columns: 1fr;
+                gap: 3px;
+            }
+
             .category-heading {
                 gap: 10px;
             }
@@ -312,6 +441,22 @@
             数学教育のための教材ポータル<br>
             授業・演習・研修で活用できるWeb教材を提供
         </p>
+
+
+        <section class="update-history" aria-labelledby="updateHistoryTitle">
+            <div class="update-history-heading">
+                <h2 class="update-history-title" id="updateHistoryTitle">UPDATE HISTORY</h2>
+                <div class="update-history-line" aria-hidden="true"></div>
+            </div>
+
+            <ul class="update-list" id="recentUpdateList" aria-label="最近の更新履歴"></ul>
+
+            <details class="update-archive" id="updateArchive" hidden>
+                <summary id="updateArchiveSummary">過去の更新履歴を表示</summary>
+                <ul class="update-list" id="olderUpdateList" aria-label="過去の更新履歴"></ul>
+            </details>
+        </section>
+
     </header>
 
     <main>
@@ -384,40 +529,46 @@
             <div class="category-heading">
                 <h3 class="category-title" id="category-math-1">数学Ⅰ</h3>
                 <div class="category-line" aria-hidden="true"></div>
-                <span class="category-count">2教材</span>
+                <span class="category-count">5教材</span>
             </div>
-
             <div class="material-grid">
-                <a
-                    class="card-link"
-                    href="./quadratic_translation.html"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label="2次関数の平行移動教材を新しいタブで開く"
-                >
+                <!-- 2次関数：y軸方向への平行移動 -->
+                <a class="card-link" href="./quadratic_translation_y.html" target="_blank" rel="noopener noreferrer" aria-label="2次関数のy軸方向への平行移動教材を新しいタブで開く">
                     <article class="card">
-                        <h3>2次関数の平行移動</h3>
-                        <p>
-                            pの値を変え、y = 2x² と y = 2(x − p)² のグラフを比較する教材です。
-                            式の中の符号、頂点の座標、グラフの移動方向の関係を視覚的に考察できます。
-                        </p>
+                        <h3>2次関数のy軸方向への平行移動</h3>
+                        <p>qの値を変え、y = 2x² と y = 2x² + q のグラフを比較する教材です。定数項、頂点のy座標、上下方向への移動の向きと大きさの関係を視覚的に考察できます。</p>
                         <span class="tag">数学Ⅰ ＞ 2次関数</span>
                     </article>
                 </a>
-
-                <a
-                    class="card-link"
-                    href="./unit-circle-triangle.html"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label="単位円と正弦定理教材を新しいタブで開く"
-                >
+                <!-- 2次関数：x軸方向への平行移動 -->
+                <a class="card-link" href="./quadratic_translation_x.html" target="_blank" rel="noopener noreferrer" aria-label="2次関数のx軸方向への平行移動教材を新しいタブで開く">
+                    <article class="card">
+                        <h3>2次関数のx軸方向への平行移動</h3>
+                        <p>pの値を変え、y = 2x² と y = 2(x − p)² のグラフを比較する教材です。式の中の符号、頂点のx座標、左右方向への移動の向きと大きさの関係を視覚的に考察できます。</p>
+                        <span class="tag">数学Ⅰ ＞ 2次関数</span>
+                    </article>
+                </a>
+                <!-- 2次関数：x軸・y軸方向への平行移動 -->
+                <a class="card-link" href="./quadratic_translation_xy.html" target="_blank" rel="noopener noreferrer" aria-label="2次関数のx軸・y軸方向への平行移動教材を新しいタブで開く">
+                    <article class="card">
+                        <h3>2次関数のx軸・y軸方向への平行移動</h3>
+                        <p>pとqの値を変え、y = 2x² と y = 2(x − p)² + q のグラフを比較する教材です。頂点の移動をL字型の矢印で捉え、式と頂点 (p, q) の関係を視覚的に考察できます。</p>
+                        <span class="tag">数学Ⅰ ＞ 2次関数</span>
+                    </article>
+                </a>
+                <!-- 関数変換プログラミング -->
+                <a class="card-link" href="./quadratic-function-transform-programming.html" target="_blank" rel="noopener noreferrer" aria-label="関数変換プログラミング教材を新しいタブで開く">
+                    <article class="card">
+                        <h3>関数変換プログラミング</h3>
+                        <p>2次関数に平行移動や対称移動を順番に施し、グラフ・頂点・式がどのように変化するかを調べる教材です。コマンドカードの順序や移動量を自由に変更し、複数の変換を組み合わせた結果を比較できます。</p>
+                        <span class="tag">数学Ⅰ ＞ 2次関数</span>
+                    </article>
+                </a>
+                <!-- 単位円と正弦定理 -->
+                <a class="card-link" href="./unit-circle-triangle.html" target="_blank" rel="noopener noreferrer" aria-label="単位円と正弦定理教材を新しいタブで開く">
                     <article class="card">
                         <h3>単位円と正弦定理</h3>
-                        <p>
-                            単位円上の3点でできる三角形を動かし、円周角と中心角、弦の長さの関係を段階的に調べる教材です。
-                            中心角の二等分線を利用して、対辺の半分の長さにsinの値が表れることを視覚的に確認できます。
-                        </p>
+                        <p>単位円上の3点でできる三角形を動かし、円周角と中心角、弦の長さの関係を段階的に調べる教材です。中心角の二等分線を利用して、対辺の半分の長さにsinの値が表れることを視覚的に確認できます。</p>
                         <span class="tag">数学Ⅰ ＞ 三角比</span>
                     </article>
                 </a>
@@ -481,8 +632,8 @@
                     <article class="card">
                         <h3>円順列を探索しよう</h3>
                         <p>
-                            文字を円形に並べて回転や並べ替えを行い、同じ円順列をグループごとに整理する教材です。
-                            通常の順列との違いを視覚的に確認できます。
+                            文字を円形に並べ、回転によって一致する並びをグループに整理する教材です。
+                            すべての文字を並べる場合に加え、一部の文字を選んで並べる円順列や、裏返した並びを同一視する数珠順列についても、操作を通して考察できます。
                         </p>
                         <span class="tag">数学A ＞ 円順列</span>
                     </article>
@@ -525,5 +676,118 @@
         <div>Mathematics Learning Hub</div>
         <div class="footer-lab">Created by Imamu-Lab</div>
     </footer>
+
+
+    <script>
+    (() => {
+        "use strict";
+
+        /*
+         * 更新履歴はこの配列へ追加します。
+         * 同じ materialId が複数ある場合は、最も新しい日付の履歴だけを表示します。
+         * date は YYYY-MM-DD 形式で入力してください。
+         */
+        const updateHistory = [
+            {
+                date: "2026-10-03",
+                materialId: "quadratic-function-transform-programming",
+                title: "「関数変換プログラミング」を追加しました。",
+                description: "平行移動や対称移動のコマンドを組み替え、2次関数のグラフ・頂点・式の変化を段階的に比較できる教材です。"
+            },
+            {
+                date: "2026-10-03",
+                materialId: "quadratic-translation-series",
+                title: "「2次関数の平行移動」教材を更新しました。",
+                description: "y軸方向、x軸方向、x軸・y軸方向の3教材を追加しました。"
+            },
+            {
+                date: "2026-10-02",
+                materialId: "circular-permutation-explorer",
+                title: "「円順列を探索しよう」を更新しました。",
+                description: "一部の文字を選んで並べる円順列や、数珠順列に対応しました。"
+            }
+        ];
+
+        const recentList = document.getElementById("recentUpdateList");
+        const olderList = document.getElementById("olderUpdateList");
+        const archive = document.getElementById("updateArchive");
+        const archiveSummary = document.getElementById("updateArchiveSummary");
+
+        if (!recentList || !olderList || !archive || !archiveSummary) return;
+
+        const toLocalDate = (dateText) => {
+            const [year, month, day] = dateText.split("-").map(Number);
+            return new Date(year, month - 1, day);
+        };
+
+        const formatDate = (dateText) => {
+            const [year, month, day] = dateText.split("-").map(Number);
+            return `${year}/${month}/${day}`;
+        };
+
+        const latestByMaterial = new Map();
+
+        updateHistory.forEach((item) => {
+            const existing = latestByMaterial.get(item.materialId);
+            if (!existing || toLocalDate(item.date) > toLocalDate(existing.date)) {
+                latestByMaterial.set(item.materialId, item);
+            }
+        });
+
+        const uniqueUpdates = [...latestByMaterial.values()].sort(
+            (a, b) => toLocalDate(b.date) - toLocalDate(a.date)
+        );
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const oneMonthAgo = new Date(today);
+        oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+
+        const recentCount = uniqueUpdates.filter(
+            (item) => toLocalDate(item.date) >= oneMonthAgo
+        ).length;
+
+        const visibleCount = Math.min(
+            uniqueUpdates.length,
+            Math.max(3, recentCount)
+        );
+
+        const visibleUpdates = uniqueUpdates.slice(0, visibleCount);
+        const olderUpdates = uniqueUpdates.slice(visibleCount);
+
+        const createItem = (item) => {
+            const listItem = document.createElement("li");
+            listItem.className = "update-item";
+
+            const date = document.createElement("time");
+            date.className = "update-date";
+            date.dateTime = item.date;
+            date.textContent = formatDate(item.date);
+
+            const text = document.createElement("div");
+            text.className = "update-text";
+
+            const title = document.createElement("strong");
+            title.textContent = item.title;
+
+            const description = document.createElement("p");
+            description.textContent = item.description;
+
+            text.append(title, description);
+            listItem.append(date, text);
+            return listItem;
+        };
+
+        visibleUpdates.forEach((item) => recentList.append(createItem(item)));
+        olderUpdates.forEach((item) => olderList.append(createItem(item)));
+
+        if (olderUpdates.length > 0) {
+            archive.hidden = false;
+            archiveSummary.textContent = `過去の更新履歴を表示（${olderUpdates.length}件）`;
+        }
+    })();
+    </script>
+
 </body>
 </html>
