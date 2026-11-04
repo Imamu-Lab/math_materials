@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>三角形の底辺と高さ</title>
+  <!-- Version 2: 底辺選択と水平化を分離 -->
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --panel: #ffffff;
+      --text: #1d2939;
+      --muted: #667085;
+      --line: #344054;
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --primary-soft: #dbeafe;
+      --height: #e11d48;
+      --height-soft: rgba(225, 29, 72, 0.18);
+      --accent: #f59e0b;
+      --border: #d0d5dd;
+      --focus: #84adff;
+      --danger: #dc2626;
+      --shadow: 0 10px 30px rgba(16, 24, 40, 0.09);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      background: var(--bg);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans JP", "Yu Gothic", "Hiragino Kaku Gothic ProN", sans-serif;
+    }
+
+    button, input { font: inherit; }
+
+    button:focus-visible, input:focus-visible {
+      outline: 3px solid var(--focus);
+      outline-offset: 2px;
+    }
+
+    .app {
+      width: min(1400px, 100%);
+      margin: 0 auto;
+      padding: 16px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.45rem, 3vw, 2rem);
+      line-height: 1.25;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(240px, 310px) minmax(0, 1fr);
+      gap: 16px;
+      align-items: stretch;
+    }
+
+    .panel, .canvas-card {
+      background: var(--panel);
+      border: 1px solid #e4e7ec;
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+    }
+
+    .panel {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .section {
+      border-bottom: 1px solid #eaecf0;
+      padding-bottom: 16px;
+    }
+    .section:last-of-type { border-bottom: 0; }
+
+    .section-title {
+      margin: 0 0 9px;
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+    }
+
+    .button-stack { display: grid; gap: 8px; }
+
+    .horizontalize-wrap {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px dashed #cbd5e1;
+    }
+    .btn.horizontalize {
+      width: 100%;
+      color: #7c3aed;
+      border-color: #c4b5fd;
+      background: #f5f3ff;
+    }
+    .btn.horizontalize:hover:not(:disabled) { background: #ede9fe; }
+
+    .btn {
+      min-height: 44px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      background: #fff;
+      padding: 9px 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background .15s, color .15s, border-color .15s, transform .08s;
+    }
+    .btn:hover:not(:disabled) { background: #f8fafc; }
+    .btn:active:not(:disabled) { transform: translateY(1px); }
+    .btn.active {
+      color: #fff;
+      background: var(--primary);
+      border-color: var(--primary);
+    }
+    .btn.secondary { font-weight: 650; }
+    .btn:disabled { opacity: .45; cursor: not-allowed; }
+
+    .top-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+    .top-actions .btn { min-height: 40px; }
+
+    .check-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 44px;
+      padding: 9px 10px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 750;
+      user-select: none;
+    }
+    .check-row input { width: 20px; height: 20px; accent-color: var(--height); }
+
+    .status {
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: #f8fafc;
+      color: var(--muted);
+      font-size: .9rem;
+      line-height: 1.55;
+      min-height: 64px;
+    }
+
+    .canvas-card {
+      position: relative;
+      min-height: 600px;
+      overflow: hidden;
+      touch-action: none;
+    }
+
+    #stage {
+      display: block;
+      width: 100%;
+      height: 100%;
+      min-height: 600px;
+      background:
+        radial-gradient(circle at 50% 45%, rgba(219,234,254,.42), transparent 45%),
+        linear-gradient(#fff, #fbfdff);
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .hint {
+      position: absolute;
+      left: 14px;
+      bottom: 12px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      color: var(--muted);
+      background: rgba(255,255,255,.9);
+      border: 1px solid #e4e7ec;
+      font-size: .8rem;
+      pointer-events: none;
+    }
+
+    .message {
+      position: absolute;
+      left: 50%;
+      top: 14px;
+      transform: translateX(-50%);
+      width: min(620px, calc(100% - 28px));
+      padding: 10px 14px;
+      border-radius: 10px;
+      color: #7c2d12;
+      background: rgba(255,247,237,.96);
+      border: 1px solid #fdba74;
+      font-size: .9rem;
+      text-align: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .2s;
+    }
+    .message.show { opacity: 1; }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      display: grid;
+      place-items: center;
+      padding: 16px;
+      background: rgba(16,24,40,.55);
+    }
+    .modal-backdrop[hidden] { display: none; }
+
+    .modal {
+      width: min(520px, 100%);
+      max-height: min(720px, 90vh);
+      overflow: auto;
+      padding: 22px;
+      border-radius: 16px;
+      background: #fff;
+      box-shadow: 0 24px 60px rgba(0,0,0,.24);
+    }
+    .modal h2 { margin: 0 0 16px; font-size: 1.35rem; }
+    .steps { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; }
+    .steps li { display: flex; gap: 11px; align-items: center; padding: 10px; border-radius: 10px; background: #f8fafc; font-weight: 700; }
+    .step-no { display: grid; place-items: center; flex: 0 0 30px; height: 30px; border-radius: 50%; color: #fff; background: var(--primary); }
+    .modal-footer { margin-top: 18px; display: flex; justify-content: flex-end; }
+    .modal-footer .btn { color: #fff; background: var(--primary); border-color: var(--primary); min-width: 110px; }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    @media (max-width: 760px) {
+      .app { padding: 10px; }
+      .topbar { align-items: flex-start; }
+      .layout { grid-template-columns: 1fr; }
+      .panel { padding: 12px; }
+      .button-stack.base-buttons { grid-template-columns: repeat(3, 1fr); }
+      .button-stack.base-buttons .btn { padding-inline: 5px; font-size: .86rem; }
+      .button-stack.angle-buttons { grid-template-columns: repeat(2, 1fr); }
+      .canvas-card, #stage { min-height: 470px; }
+      .status { min-height: 0; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <h1>三角形の底辺と高さ</h1>
+      <div class="top-actions">
+        <button class="btn secondary" id="helpBtn" type="button">使い方</button>
+        <button class="btn secondary" id="resetBtn" type="button">初期状態に戻す</button>
+      </div>
+    </header>
+
+    <div class="layout">
+      <aside class="panel" aria-label="操作パネル">
+        <section class="section">
+          <h2 class="section-title">1　底辺を選ぶ</h2>
+          <div class="button-stack base-buttons" id="baseButtons">
+            <button class="btn active" data-base="AB" type="button">辺ABを底辺として選ぶ</button>
+            <button class="btn" data-base="BC" type="button">辺BCを底辺として選ぶ</button>
+            <button class="btn" data-base="CA" type="button">辺CAを底辺として選ぶ</button>
+          </div>
+          <div class="horizontalize-wrap">
+            <button class="btn horizontalize" id="horizontalizeBtn" type="button">↻ 選択した底辺を水平に置く</button>
+          </div>
+        </section>
+
+        <section class="section">
+          <h2 class="section-title">2　高さを表示する</h2>
+          <label class="check-row">
+            <input id="heightToggle" type="checkbox">
+            <span>高さを表示</span>
+          </label>
+        </section>
+
+        <section class="section">
+          <h2 class="section-title">3　注目する角を選ぶ</h2>
+          <div class="button-stack angle-buttons" id="angleButtons"></div>
+        </section>
+
+        <div class="status" id="status" aria-live="polite">
+          辺ABを底辺として選んでいます。高さを表示してみましょう。
+        </div>
+      </aside>
+
+      <section class="canvas-card" aria-label="三角形の描画エリア">
+        <svg id="stage" viewBox="0 0 900 620" role="img" aria-labelledby="svgTitle svgDesc">
+          <title id="svgTitle">三角形の底辺と高さ</title>
+          <desc id="svgDesc">頂点をドラッグして三角形を変形できます。選んだ辺を水平な底辺にできます。</desc>
+          <g id="drawing"></g>
+        </svg>
+        <div class="message" id="outsideMessage">底辺の延長線と高さによって、三角形の外側に直角三角形ができます。</div>
+        <div class="hint">● 頂点A・B・Cをドラッグして変形できます</div>
+      </section>
+    </div>
+  </main>
+
+  <div class="modal-backdrop" id="helpModal" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+    <div class="modal">
+      <h2 id="helpTitle">使い方</h2>
+      <ol class="steps">
+        <li><span class="step-no">1</span><span>底辺を選ぶ</span></li>
+        <li><span class="step-no">2</span><span>高さを表示する</span></li>
+        <li><span class="step-no">3</span><span>注目する角を選ぶ</span></li>
+        <li><span class="step-no">4</span><span>直角三角形を確かめる</span></li>
+      </ol>
+      <div class="modal-footer">
+        <button class="btn" id="closeHelpBtn" type="button">閉じる</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="sr-only" id="live" aria-live="polite"></div>
+
+  <script>
+    (() => {
+      'use strict';
+
+      const SVG_NS = 'http://www.w3.org/2000/svg';
+      const VIEW = { w: 900, h: 620, pad: 70 };
+      const INITIAL = {
+        A: { x: 235, y: 470 },
+        B: { x: 665, y: 470 },
+        C: { x: 425, y: 145 }
+      };
+      const baseMap = {
+        AB: { p: 'A', q: 'B', opposite: 'C' },
+        BC: { p: 'B', q: 'C', opposite: 'A' },
+        CA: { p: 'C', q: 'A', opposite: 'B' }
+      };
+
+      const stage = document.getElementById('stage');
+      const drawing = document.getElementById('drawing');
+      const heightToggle = document.getElementById('heightToggle');
+      const baseButtons = document.getElementById('baseButtons');
+      const horizontalizeBtn = document.getElementById('horizontalizeBtn');
+      const angleButtons = document.getElementById('angleButtons');
+      const status = document.getElementById('status');
+      const helpModal = document.getElementById('helpModal');
+      const helpBtn = document.getElementById('helpBtn');
+      const closeHelpBtn = document.getElementById('closeHelpBtn');
+      const resetBtn = document.getElementById('resetBtn');
+      const outsideMessage = document.getElementById('outsideMessage');
+      const live = document.getElementById('live');
+
+      let points = clonePoints(INITIAL);
+      let selectedBase = 'AB';
+      let heightVisible = false;
+      let selectedAngle = null;
+      let dragging = null;
+      let animating = false;
+      let flashVertex = null;
+      let flashTimer = null;
+
+      function clonePoints(src) {
+        return Object.fromEntries(Object.entries(src).map(([k, p]) => [k, { x: p.x, y: p.y }]));
+      }
+
+      const add = (a, b) => ({ x: a.x + b.x, y: a.y + b.y });
+      const sub = (a, b) => ({ x: a.x - b.x, y: a.y - b.y });
+      const mul = (a, s) => ({ x: a.x * s, y: a.y * s });
+      const dot = (a, b) => a.x * b.x + a.y * b.y;
+      const cross = (a, b) => a.x * b.y - a.y * b.x;
+      const len = a => Math.hypot(a.x, a.y);
+      const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+
+      function el(name, attrs = {}, text = '') {
+        const node = document.createElementNS(SVG_NS, name);
+        Object.entries(attrs).forEach(([k, v]) => node.setAttribute(k, String(v)));
+        if (text) node.textContent = text;
+        return node;
+      }
+
+      function svgPoint(evt) {
+        const pt = stage.createSVGPoint();
+        pt.x = evt.clientX;
+        pt.y = evt.clientY;
+        const matrix = stage.getScreenCTM();
+        return matrix ? pt.matrixTransform(matrix.inverse()) : { x: 0, y: 0 };
+      }
+
+      function altitudeGeometry() {
+        const info = baseMap[selectedBase];
+        const P = points[info.p];
+        const Q = points[info.q];
+        const R = points[info.opposite];
+        const v = sub(Q, P);
+        const vv = dot(v, v) || 1;
+        const t = dot(sub(R, P), v) / vv;
+        const H = add(P, mul(v, t));
+        return { ...info, P, Q, R, H, t, v };
+      }
+
+      function polygonPoints(arr) {
+        return arr.map(p => `${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(' ');
+      }
+
+      function drawLine(a, b, attrs = {}) {
+        return el('line', { x1: a.x, y1: a.y, x2: b.x, y2: b.y, ...attrs });
+      }
+
+      function angleArc(vertexName, radius = 35) {
+        const info = baseMap[selectedBase];
+        const V = points[vertexName];
+        const otherBaseName = vertexName === info.p ? info.q : info.p;
+        const O = points[otherBaseName];
+        const R = points[info.opposite];
+        let u = sub(O, V);
+        let w = sub(R, V);
+        const ul = len(u) || 1;
+        const wl = len(w) || 1;
+        u = mul(u, 1 / ul);
+        w = mul(w, 1 / wl);
+        const a = add(V, mul(u, radius));
+        const b = add(V, mul(w, radius));
+        let angle = Math.acos(clamp(dot(u, w), -1, 1));
+        const sweep = cross(u, w) > 0 ? 1 : 0;
+        const largeArc = angle > Math.PI ? 1 : 0;
+        return `M ${a.x} ${a.y} A ${radius} ${radius} 0 ${largeArc} ${sweep} ${b.x} ${b.y}`;
+      }
+
+      function rightAnglePath(H, P, R) {
+        let u = sub(P, H);
+        let v = sub(R, H);
+        const ul = len(u) || 1;
+        const vl = len(v) || 1;
+        u = mul(u, 1 / ul);
+        v = mul(v, 1 / vl);
+        const s = 16;
+        const a = add(H, mul(u, s));
+        const b = add(a, mul(v, s));
+        const c = add(H, mul(v, s));
+        return `M ${a.x} ${a.y} L ${b.x} ${b.y} L ${c.x} ${c.y}`;
+      }
+
+      function addExtension(group, geom) {
+        const { P, Q, H, v, t } = geom;
+        if (t >= 0 && t <= 1) return;
+        const unit = mul(v, 1 / (len(v) || 1));
+        const edge = t < 0 ? P : Q;
+        const beyond = add(H, mul(unit, t < 0 ? -36 : 36));
+        group.appendChild(drawLine(edge, beyond, {
+          stroke: selectedAngle ? '#f59e0b' : '#64748b', 'stroke-width': selectedAngle ? 5 : 2.2, 'stroke-dasharray': '8 7', 'stroke-linecap': 'round'
+        }));
+      }
+
+      function render() {
+        drawing.replaceChildren();
+        const geom = altitudeGeometry();
+        const heightGroup = el('g');
+        const triangleGroup = el('g');
+        const labelsGroup = el('g');
+        const handlesGroup = el('g');
+
+        if (heightVisible) addExtension(heightGroup, geom);
+
+        if (heightVisible && selectedAngle) {
+          const selectedPoint = points[selectedAngle];
+          const fillTriangle = el('polygon', {
+            points: polygonPoints([selectedPoint, geom.H, geom.R]),
+            fill: 'rgba(245, 158, 11, 0.25)',
+            stroke: '#f59e0b',
+            'stroke-width': 2
+          });
+          heightGroup.appendChild(fillTriangle);
+          heightGroup.appendChild(el('path', {
+            d: angleArc(selectedAngle), fill: 'none', stroke: '#f59e0b', 'stroke-width': 7, 'stroke-linecap': 'round'
+          }));
+        }
+
+        triangleGroup.appendChild(el('polygon', {
+          points: polygonPoints([points.A, points.B, points.C]),
+          fill: 'rgba(37, 99, 235, 0.055)',
+          stroke: '#344054',
+          'stroke-width': 3,
+          'stroke-linejoin': 'round'
+        }));
+
+        triangleGroup.appendChild(drawLine(geom.P, geom.Q, {
+          stroke: selectedAngle ? '#f59e0b' : '#2563eb', 'stroke-width': 7, 'stroke-linecap': 'round'
+        }));
+
+        // 注目角を挟むもう1辺も、底辺・角の弧と同じ色で強調する。
+        if (heightVisible && selectedAngle) {
+          triangleGroup.appendChild(drawLine(points[selectedAngle], geom.R, {
+            stroke: '#f59e0b', 'stroke-width': 7, 'stroke-linecap': 'round'
+          }));
+        }
+
+        if (heightVisible) {
+          heightGroup.appendChild(drawLine(geom.R, geom.H, {
+            stroke: '#e11d48', 'stroke-width': selectedAngle ? 5 : 4,
+            'stroke-dasharray': '10 7', 'stroke-linecap': 'round'
+          }));
+          heightGroup.appendChild(el('circle', { cx: geom.H.x, cy: geom.H.y, r: 5.5, fill: '#e11d48' }));
+          heightGroup.appendChild(el('path', {
+            d: rightAnglePath(geom.H, geom.P, geom.R), fill: 'none', stroke: '#e11d48', 'stroke-width': 3,
+            'stroke-linejoin': 'round'
+          }));
+
+          const mid = mul(add(geom.R, geom.H), 0.5);
+          const side = sub(geom.R, geom.H);
+          const normal = len(side) ? { x: -side.y / len(side), y: side.x / len(side) } : { x: 1, y: 0 };
+          const labelPos = add(mid, mul(normal, 23));
+          const hLabel = el('text', {
+            x: labelPos.x, y: labelPos.y, fill: '#be123c', 'font-size': 19, 'font-weight': 800,
+            'text-anchor': 'middle', 'dominant-baseline': 'middle',
+            'paint-order': 'stroke', stroke: '#fff', 'stroke-width': 5, 'stroke-linejoin': 'round'
+          }, '高さ');
+          labelsGroup.appendChild(hLabel);
+        }
+
+        const baseMid = mul(add(geom.P, geom.Q), 0.5);
+        const toOpp = sub(geom.R, baseMid);
+        const toOppLen = len(toOpp) || 1;
+        const away = mul(toOpp, -1 / toOppLen);
+        const baseLabelPos = add(baseMid, mul(away, 24));
+        labelsGroup.appendChild(el('text', {
+          x: baseLabelPos.x, y: baseLabelPos.y, fill: '#1d4ed8', 'font-size': 18, 'font-weight': 800,
+          'text-anchor': 'middle', 'dominant-baseline': 'middle', 'paint-order': 'stroke', stroke: '#fff', 'stroke-width': 5
+        }, `底辺 ${selectedBase}`));
+
+        ['A', 'B', 'C'].forEach(name => {
+          const p = points[name];
+          const centroid = mul(add(add(points.A, points.B), points.C), 1 / 3);
+          let out = sub(p, centroid);
+          const outLen = len(out) || 1;
+          out = mul(out, 1 / outLen);
+          const lp = add(p, mul(out, 27));
+
+          const hit = el('circle', {
+            cx: p.x, cy: p.y, r: 25, fill: 'transparent', cursor: animating ? 'default' : 'grab',
+            'data-vertex': name, role: 'button', tabindex: '0', 'aria-label': `頂点${name}。ドラッグして移動`
+          });
+          const handle = el('circle', {
+            cx: p.x, cy: p.y, r: 10,
+            fill: flashVertex === name ? '#dc2626' : '#ffffff',
+            stroke: flashVertex === name ? '#dc2626' : '#2563eb', 'stroke-width': 4,
+            'pointer-events': 'none'
+          });
+          handlesGroup.append(hit, handle);
+          labelsGroup.appendChild(el('text', {
+            x: lp.x, y: lp.y, fill: '#111827', 'font-size': 22, 'font-weight': 850,
+            'text-anchor': 'middle', 'dominant-baseline': 'middle', 'pointer-events': 'none',
+            'paint-order': 'stroke', stroke: '#fff', 'stroke-width': 6
+          }, name));
+        });
+
+        if (heightVisible) {
+          [geom.p, geom.q].forEach(name => {
+            const p = points[name];
+            const circle = el('circle', {
+              cx: p.x, cy: p.y, r: 32, fill: 'transparent', cursor: 'pointer',
+              'data-angle': name, role: 'button', tabindex: '0', 'aria-label': `角${name}に注目`
+            });
+            handlesGroup.appendChild(circle);
+          });
+        }
+
+        drawing.append(heightGroup, triangleGroup, labelsGroup, handlesGroup);
+        updateControls(geom);
+      }
+
+      function updateControls(geom = altitudeGeometry()) {
+        baseButtons.querySelectorAll('[data-base]').forEach(btn => {
+          btn.classList.toggle('active', btn.dataset.base === selectedBase);
+          btn.setAttribute('aria-pressed', btn.dataset.base === selectedBase ? 'true' : 'false');
+          btn.disabled = animating;
+        });
+        horizontalizeBtn.disabled = animating;
+
+        const ends = [geom.p, geom.q];
+        angleButtons.replaceChildren();
+        ends.forEach(name => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'btn' + (selectedAngle === name ? ' active' : '');
+          btn.textContent = `角${name}に注目`;
+          btn.dataset.angle = name;
+          btn.disabled = !heightVisible || animating;
+          btn.setAttribute('aria-pressed', selectedAngle === name ? 'true' : 'false');
+          angleButtons.appendChild(btn);
+        });
+
+        heightToggle.checked = heightVisible;
+        heightToggle.disabled = animating;
+        const outside = geom.t < 0 || geom.t > 1;
+        outsideMessage.classList.toggle('show', heightVisible && !!selectedAngle && outside);
+
+        if (!heightVisible) {
+          status.textContent = `辺${selectedBase}を底辺として選んでいます。高さを表示してみましょう。`;
+        } else if (!selectedAngle) {
+          status.textContent = `辺${selectedBase}に対する高さを表示しています。注目する角を選びましょう。`;
+        } else if (outside) {
+          status.textContent = `角${selectedAngle}に注目しています。延長線を含む直角三角形を確かめましょう。`;
+        } else {
+          status.textContent = `角${selectedAngle}に注目しています。色の付いた直角三角形を確かめましょう。`;
+        }
+      }
+
+      function toggleAngle(name) {
+        if (!heightVisible || animating) return;
+        const geom = altitudeGeometry();
+        if (![geom.p, geom.q].includes(name)) return;
+        selectedAngle = selectedAngle === name ? null : name;
+        render();
+      }
+
+      function validMove(name, candidate) {
+        const test = clonePoints(points);
+        test[name] = candidate;
+        const names = ['A', 'B', 'C'];
+        for (let i = 0; i < names.length; i++) {
+          for (let j = i + 1; j < names.length; j++) {
+            if (len(sub(test[names[i]], test[names[j]])) < 75) return false;
+          }
+        }
+        const area2 = Math.abs(cross(sub(test.B, test.A), sub(test.C, test.A)));
+        const longest = Math.max(len(sub(test.A, test.B)), len(sub(test.B, test.C)), len(sub(test.C, test.A)));
+        const altitudeLike = area2 / Math.max(longest, 1);
+        return altitudeLike >= 45;
+      }
+
+      function flash(name) {
+        flashVertex = name;
+        clearTimeout(flashTimer);
+        flashTimer = setTimeout(() => { flashVertex = null; render(); }, 230);
+      }
+
+      function onPointerDown(evt) {
+        if (animating) return;
+        const vertex = evt.target.closest('[data-vertex]')?.dataset.vertex;
+        const angle = evt.target.closest('[data-angle]')?.dataset.angle;
+        if (angle) { toggleAngle(angle); return; }
+        if (!vertex) return;
+        dragging = vertex;
+        stage.setPointerCapture?.(evt.pointerId);
+        evt.preventDefault();
+      }
+
+      function onPointerMove(evt) {
+        if (!dragging || animating) return;
+        const p = svgPoint(evt);
+        const candidate = {
+          x: clamp(p.x, VIEW.pad, VIEW.w - VIEW.pad),
+          y: clamp(p.y, VIEW.pad, VIEW.h - VIEW.pad)
+        };
+        if (validMove(dragging, candidate)) {
+          points[dragging] = candidate;
+          render();
+        } else {
+          flash(dragging);
+        }
+        evt.preventDefault();
+      }
+
+      function endDrag(evt) {
+        if (!dragging) return;
+        stage.releasePointerCapture?.(evt.pointerId);
+        dragging = null;
+      }
+
+      function computeHorizontalTarget(baseKey) {
+        const src = clonePoints(points);
+        const info = baseMap[baseKey];
+        const P = src[info.p];
+        const Q = src[info.q];
+        const R = src[info.opposite];
+        const mid = mul(add(P, Q), 0.5);
+        const angle = Math.atan2(Q.y - P.y, Q.x - P.x);
+
+        function rotateAll(theta) {
+          const cos = Math.cos(theta), sin = Math.sin(theta);
+          const result = {};
+          Object.entries(src).forEach(([name, pt]) => {
+            const d = sub(pt, mid);
+            result[name] = { x: d.x * cos - d.y * sin, y: d.x * sin + d.y * cos };
+          });
+          return result;
+        }
+
+        let rotated = rotateAll(-angle);
+        if (rotated[info.opposite].y > rotated[info.p].y) rotated = rotateAll(-angle + Math.PI);
+
+        let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+        Object.values(rotated).forEach(p => {
+          minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x);
+          minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y);
+        });
+        const availableW = VIEW.w - 2 * VIEW.pad;
+        const availableH = VIEW.h - 2 * VIEW.pad;
+        const scale = Math.min(1, availableW / Math.max(maxX - minX, 1), availableH / Math.max(maxY - minY, 1));
+        const cx = (minX + maxX) / 2;
+        const cy = (minY + maxY) / 2;
+        const targetCenter = { x: VIEW.w / 2, y: VIEW.h / 2 + 20 };
+        const target = {};
+        Object.entries(rotated).forEach(([name, p]) => {
+          target[name] = { x: targetCenter.x + (p.x - cx) * scale, y: targetCenter.y + (p.y - cy) * scale };
+        });
+        return target;
+      }
+
+      function animateTo(target) {
+        const start = clonePoints(points);
+        const duration = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 650;
+        const startTime = performance.now();
+        animating = true;
+        render();
+
+        function tick(now) {
+          const raw = duration === 0 ? 1 : clamp((now - startTime) / duration, 0, 1);
+          const t = 1 - Math.pow(1 - raw, 3);
+          ['A', 'B', 'C'].forEach(name => {
+            points[name] = {
+              x: start[name].x + (target[name].x - start[name].x) * t,
+              y: start[name].y + (target[name].y - start[name].y) * t
+            };
+          });
+          render();
+          if (raw < 1) requestAnimationFrame(tick);
+          else {
+            animating = false;
+            points = clonePoints(target);
+            render();
+            live.textContent = `辺${selectedBase}を水平な底辺にしました。`;
+          }
+        }
+        requestAnimationFrame(tick);
+      }
+
+      function selectBase(key) {
+        if (animating || !baseMap[key]) return;
+        selectedBase = key;
+        selectedAngle = null;
+        render();
+        live.textContent = `辺${selectedBase}を底辺として選びました。三角形の向きは変えていません。`;
+      }
+
+      function horizontalizeSelectedBase() {
+        if (animating) return;
+        const target = computeHorizontalTarget(selectedBase);
+        animateTo(target);
+      }
+
+      baseButtons.addEventListener('click', evt => {
+        const btn = evt.target.closest('[data-base]');
+        if (btn) selectBase(btn.dataset.base);
+      });
+
+      horizontalizeBtn.addEventListener('click', horizontalizeSelectedBase);
+
+      angleButtons.addEventListener('click', evt => {
+        const btn = evt.target.closest('[data-angle]');
+        if (btn) toggleAngle(btn.dataset.angle);
+      });
+
+      heightToggle.addEventListener('change', () => {
+        heightVisible = heightToggle.checked;
+        if (!heightVisible) selectedAngle = null;
+        render();
+      });
+
+      stage.addEventListener('pointerdown', onPointerDown);
+      stage.addEventListener('pointermove', onPointerMove);
+      stage.addEventListener('pointerup', endDrag);
+      stage.addEventListener('pointercancel', endDrag);
+
+      stage.addEventListener('keydown', evt => {
+        const angle = evt.target.dataset.angle;
+        if (angle && (evt.key === 'Enter' || evt.key === ' ')) {
+          evt.preventDefault();
+          toggleAngle(angle);
+        }
+      });
+
+      function openHelp() {
+        helpModal.hidden = false;
+        closeHelpBtn.focus();
+      }
+      function closeHelp() {
+        helpModal.hidden = true;
+        helpBtn.focus();
+      }
+      helpBtn.addEventListener('click', openHelp);
+      closeHelpBtn.addEventListener('click', closeHelp);
+      helpModal.addEventListener('click', evt => { if (evt.target === helpModal) closeHelp(); });
+      document.addEventListener('keydown', evt => {
+        if (evt.key === 'Escape' && !helpModal.hidden) closeHelp();
+      });
+
+      resetBtn.addEventListener('click', () => {
+        if (animating) return;
+        points = clonePoints(INITIAL);
+        selectedBase = 'AB';
+        heightVisible = false;
+        selectedAngle = null;
+        dragging = null;
+        render();
+        live.textContent = '初期状態に戻しました。';
+      });
+
+      render();
+    })();
+  </script>
+</body>
+</html>
